@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Kahuna Snow Canvass — Golden Valley</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+<style>
+  :root{
+    --blue:#1d6fb8; --blue-dark:#154f85; --ink:#1a2430; --muted:#6b7785; --line:#e2e6ea;
+    --bg:#f6f8fa; --card:#ffffff; --green:#2e9e5b; --amber:#e0a12b; --gray:#98a2ae; --red:#d6483f;
+    --radius:12px;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg);}
+  #app{display:none;height:100%;}
+  #auth-screen{height:100%;display:flex;align-items:center;justify-content:center;padding:24px;}
+  .auth-card{background:var(--card);border-radius:var(--radius);box-shadow:0 2px 16px rgba(20,30,40,.08);padding:32px 28px;max-width:380px;width:100%;}
+  .auth-card h1{font-size:20px;margin:0 0 4px;}
+  .auth-card p.sub{color:var(--muted);font-size:13.5px;margin:0 0 22px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin-bottom:5px;}
+  .field input{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;font-size:15px;}
+  .field input:focus{outline:2px solid var(--blue);outline-offset:-1px;border-color:var(--blue);}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:none;border-radius:8px;padding:11px 16px;font-size:14.5px;font-weight:600;cursor:pointer;width:100%;}
+  .btn-primary{background:var(--blue);color:#fff;}
+  .btn-primary:hover{background:var(--blue-dark);}
+  .btn-primary:disabled{background:#a9c4de;cursor:default;}
+  .btn-link{background:none;color:var(--blue);width:auto;padding:6px 0;font-weight:600;font-size:13.5px;}
+  .auth-toggle{text-align:center;margin-top:16px;font-size:13.5px;color:var(--muted);}
+  .err{background:#fdeceb;color:#a3352c;border-radius:8px;padding:9px 12px;font-size:13px;margin-bottom:14px;display:none;}
+  .ok{background:#e9f7ef;color:#1c6b3f;border-radius:8px;padding:9px 12px;font-size:13px;margin-bottom:14px;display:none;}
+
+  #app{flex-direction:column;}
+  header{display:flex;align-items:center;gap:10px;padding:9px 14px;background:var(--card);border-bottom:1px solid var(--line);z-index:1000;flex-wrap:wrap;}
+  header .brand{font-weight:800;font-size:15px;white-space:nowrap;}
+  header .brand span{color:var(--blue);}
+  header .datepick{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);}
+  header .datepick input{border:1px solid var(--line);border-radius:6px;padding:5px 7px;font-size:13px;}
+  header .spacer{flex:1;}
+  header .who{font-size:12.5px;color:var(--muted);text-align:right;line-height:1.3;}
+  header .who b{color:var(--ink);}
+  header .icon-btn{background:none;border:1px solid var(--line);border-radius:7px;padding:6px 10px;font-size:12.5px;cursor:pointer;color:var(--ink);}
+  header .icon-btn:hover{background:#f0f3f5;}
+  #view-toggle{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;}
+  #view-toggle button{border:none;background:var(--card);padding:6px 10px;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer;}
+  #view-toggle button.active{background:var(--blue);color:#fff;}
+
+  #main{flex:1;position:relative;min-height:0;}
+  #map{position:absolute;inset:0;}
+
+  #stats-bar{position:absolute;top:10px;left:10px;z-index:800;background:rgba(255,255,255,.96);border-radius:10px;box-shadow:0 2px 10px rgba(20,30,40,.12);padding:8px 12px;font-size:12px;display:flex;gap:12px;}
+  #stats-bar .stat b{display:block;font-size:15px;}
+  #stats-bar .stat.done b{color:var(--green);}
+  #stats-bar .stat.progress b{color:var(--amber);}
+  #stats-bar .stat.remain b{color:var(--gray);}
+
+  #legend{position:absolute;bottom:14px;left:10px;z-index:800;background:rgba(255,255,255,.96);border-radius:10px;box-shadow:0 2px 10px rgba(20,30,40,.12);padding:8px 12px;font-size:11.5px;color:var(--muted);}
+  #legend .row{display:flex;align-items:center;gap:6px;margin-top:3px;}
+  #legend .dot{width:10px;height:10px;border-radius:50%;display:inline-block;}
+
+  #search-box{position:absolute;top:10px;right:10px;z-index:800;width:230px;}
+  #search-box input{width:100%;padding:9px 12px;border-radius:10px;border:1px solid var(--line);box-shadow:0 2px 10px rgba(20,30,40,.1);font-size:13.5px;}
+  #search-results{background:#fff;border-radius:10px;margin-top:4px;box-shadow:0 2px 10px rgba(20,30,40,.12);max-height:260px;overflow:auto;display:none;}
+  #search-results .res-item{padding:8px 12px;font-size:13px;border-bottom:1px solid var(--line);cursor:pointer;}
+  #search-results .res-item:last-child{border-bottom:none;}
+  #search-results .res-item:hover{background:#f0f6fb;}
+
+  #panel{position:absolute;right:0;top:0;bottom:0;width:340px;max-width:92vw;background:var(--card);box-shadow:-2px 0 14px rgba(20,30,40,.1);transform:translateX(100%);transition:transform .18s ease;z-index:1100;display:flex;flex-direction:column;}
+  #panel.open{transform:translateX(0);}
+  #panel .p-head{padding:16px 18px 10px;border-bottom:1px solid var(--line);}
+  #panel .p-head .close{float:right;background:none;border:none;font-size:20px;color:var(--muted);cursor:pointer;line-height:1;}
+  #panel .p-head h2{font-size:16.5px;margin:0 6px 4px 0;}
+  #panel .p-head .meta{font-size:12.5px;color:var(--muted);}
+  #panel .badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-top:8px;}
+  .badge.not_started{background:#eef1f3;color:var(--gray);}
+  .badge.in_progress{background:#fdf1dc;color:#93650f;}
+  .badge.completed{background:#e2f5e9;color:var(--green);}
+  .badge.skipped{background:#fbeaea;color:var(--red);}
+  #panel .p-body{flex:1;overflow:auto;padding:14px 18px;}
+  #panel .actions{display:flex;gap:8px;margin-bottom:16px;}
+  #panel .actions button{flex:1;padding:9px 4px;border-radius:8px;border:1px solid var(--line);background:#fff;font-size:12.5px;font-weight:700;cursor:pointer;}
+  #panel .actions button.act-progress{color:#93650f;border-color:#f1cf94;}
+  #panel .actions button.act-complete{color:var(--green);border-color:#a9dcbe;}
+  #panel .actions button.act-skip{color:var(--red);border-color:#eab5b0;}
+  #panel .actions button:hover{filter:brightness(.96);}
+  #panel .section-title{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:14px 0 6px;}
+  #panel .addr-list{list-style:none;margin:0;padding:0;font-size:13.5px;}
+  #panel .addr-list li{padding:6px 0;border-bottom:1px solid #f0f2f4;display:flex;justify-content:space-between;}
+  #panel .addr-list li .yr{color:var(--muted);font-size:12px;}
+  #panel textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px;font-size:13px;font-family:inherit;resize:vertical;min-height:52px;}
+  #panel .save-note{margin-top:6px;font-size:12px;padding:6px 10px;width:auto;}
+  #panel .history{font-size:12.5px;color:var(--muted);}
+
+  #list-drawer{position:absolute;left:0;top:0;bottom:0;width:320px;max-width:88vw;background:var(--card);box-shadow:2px 0 14px rgba(20,30,40,.1);transform:translateX(-100%);transition:transform .18s ease;z-index:1050;display:flex;flex-direction:column;}
+  #list-drawer.open{transform:translateX(0);}
+  #list-drawer .l-head{padding:14px 16px 8px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;}
+  #list-drawer .l-head h2{font-size:15px;margin:0;}
+  #list-drawer .close{background:none;border:none;font-size:20px;color:var(--muted);cursor:pointer;}
+  #list-drawer .filters{display:flex;gap:6px;padding:8px 16px;flex-wrap:wrap;}
+  #list-drawer .filters button{border:1px solid var(--line);background:#fff;border-radius:14px;padding:4px 10px;font-size:11.5px;font-weight:600;color:var(--muted);cursor:pointer;}
+  #list-drawer .filters button.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+  #list-drawer .l-body{flex:1;overflow:auto;padding:6px 10px;}
+  .terr-row{padding:10px 10px;border-radius:8px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;}
+  .terr-row:hover{background:#f4f7f9;}
+  .terr-row .name{font-size:13.5px;font-weight:600;}
+  .terr-row .sub{font-size:11.5px;color:var(--muted);}
+  .terr-row .dot{width:9px;height:9px;border-radius:50%;flex:none;}
+
+  #toggle-list-btn{position:absolute;top:64px;left:10px;z-index:800;}
+
+  @media (max-width:640px){
+    header .who{display:none;}
+    #stats-bar{font-size:11px;padding:6px 10px;gap:8px;}
+    #panel{width:100%;max-width:100%;}
+  }
+</style>
+</head>
+<body>
+
+<div id="auth-screen">
+  <div class="auth-card">
+    <h1>Kahuna Snow Canvass</h1>
+    <p class="sub" id="auth-sub">Golden Valley door-to-door tracker</p>
+    <div class="err" id="auth-err"></div>
+    <div class="ok" id="auth-ok"></div>
+
+    <form id="signin-form">
+      <div class="field"><label>Email</label><input type="email" id="si-email" autocomplete="username" required></div>
+      <div class="field"><label>Password</label><input type="password" id="si-pass" autocomplete="current-password" required></div>
+      <button class="btn btn-primary" type="submit">Log in</button>
+    </form>
+
+    <form id="signup-form" style="display:none;">
+      <div class="field"><label>Your name</label><input type="text" id="su-name" required></div>
+      <div class="field"><label>Email</label><input type="email" id="su-email" autocomplete="username" required></div>
+      <div class="field"><label>Create a password</label><input type="password" id="su-pass" autocomplete="new-password" minlength="6" required></div>
+      <button class="btn btn-primary" type="submit">Create account</button>
+    </form>
+
+    <div class="auth-toggle">
+      <span id="to-signup">New estimator? <button type="button" class="btn-link" id="show-signup">Create an account</button></span>
+      <span id="to-signin" style="display:none;">Already have an account? <button type="button" class="btn-link" id="show-signin">Log in</button></span>
+    </div>
+  </div>
+</div>
+
+<div id="app">
+  <header>
+    <div class="brand">Kahuna <span>Snow Canvass</span></div>
+    <div id="view-toggle">
+      <button id="vt-progress" class="active">Today's Progress</button>
+      <button id="vt-priority">Oldest Homes</button>
+    </div>
+    <div class="datepick">
+      Date: <input type="date" id="work-date">
+    </div>
+    <div class="spacer"></div>
+    <div class="who" id="who-box"></div>
+    <button class="icon-btn" id="signout-btn">Sign out</button>
+  </header>
+  <div id="main">
+    <div id="map"></div>
+    <button class="icon-btn" id="toggle-list-btn" style="background:#fff;">☰ Territories</button>
+    <div id="stats-bar">
+      <div class="stat done"><b id="stat-done">0</b>Done</div>
+      <div class="stat progress"><b id="stat-progress">0</b>In progress</div>
+      <div class="stat remain"><b id="stat-remain">0</b>Not started</div>
+    </div>
+    <div id="search-box">
+      <input type="text" id="search-input" placeholder="Search street or address…">
+      <div id="search-results"></div>
+    </div>
+    <div id="legend">
+      <div id="legend-title" style="font-weight:700;color:var(--ink);">Today's status</div>
+      <div id="legend-body"></div>
+    </div>
+
+    <div id="list-drawer">
+      <div class="l-head"><h2>Territories</h2><button class="close" id="close-list">&times;</button></div>
+      <div class="filters" id="list-filters">
+        <button data-f="all" class="active">All</button>
+        <button data-f="not_started">Not started</button>
+        <button data-f="in_progress">In progress</button>
+        <button data-f="completed">Done</button>
+      </div>
+      <div class="l-body" id="list-body"></div>
+    </div>
+
+    <div id="panel">
+      <div class="p-head">
+        <button class="close" id="close-panel">&times;</button>
+        <h2 id="p-name">—</h2>
+        <div class="meta" id="p-meta">—</div>
+        <span class="badge" id="p-badge">—</span>
+      </div>
+      <div class="p-body">
+        <div class="actions">
+          <button class="act-progress" id="act-progress">Start</button>
+          <button class="act-complete" id="act-complete">Mark done</button>
+          <button class="act-skip" id="act-skip">Skip</button>
+        </div>
+        <div class="section-title">Notes for this date</div>
+        <textarea id="p-notes" placeholder="e.g. left hangers on 6 of 8 doors, 2 dogs out"></textarea>
+        <button class="btn btn-primary save-note" id="save-note">Save note</button>
+        <div class="section-title">Last update</div>
+        <div class="history" id="p-history">No activity yet for this date.</div>
+        <div class="section-title" id="addr-title">Homes in this block (8)</div>
+        <ul class="addr-list" id="p-addrs"></ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const SUPABASE_URL = 'https://rcavqtzrezczmzpwwudj.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjYXZxdHpyZXpjem16cHd3dWRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5ODc3NTMsImV4cCI6MjEwMjU2Mzc1M30.JB2vpHcZzv74J2jbJr-3pEX0ixk9MTAq0KPhF44l0gk';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const STATUS_COLOR = { not_started: '#98a2ae', in_progress: '#e0a12b', completed: '#2e9e5b', skipped: '#d6483f' };
+const STATUS_LABEL = { not_started: 'Not started', in_progress: 'In progress', completed: 'Completed', skipped: 'Skipped' };
+
+let state = {
+  profile: null,
+  territories: [],        // all territories (static reference data)
+  statusByTerritory: {},  // territory_id -> status row for selected date
+  markers: {},            // territory_id -> leaflet marker
+  selectedTerritoryId: null,
+  workDate: todayStr(),
+  view: 'progress',       // 'progress' | 'priority'
+  listFilter: 'all',
+  channel: null,
+};
+
+function todayStr(){
+  const d = new Date();
+  const tz = new Date(d.getTime() - d.getTimezoneOffset()*60000);
+  return tz.toISOString().slice(0,10);
+}
+
+// ---------- AUTH ----------
+const authErr = document.getElementById('auth-err');
+const authOk = document.getElementById('auth-ok');
+function showAuthErr(msg){ authErr.textContent = msg; authErr.style.display='block'; authOk.style.display='none'; }
+function showAuthOk(msg){ authOk.textContent = msg; authOk.style.display='block'; authErr.style.display='none'; }
+function clearAuthMsgs(){ authErr.style.display='none'; authOk.style.display='none'; }
+
+document.getElementById('show-signup').onclick = () => {
+  document.getElementById('signin-form').style.display='none';
+  document.getElementById('signup-form').style.display='block';
+  document.getElementById('to-signup').style.display='none';
+  document.getElementById('to-signin').style.display='inline';
+  document.getElementById('auth-sub').textContent = 'Create your estimator account';
+  clearAuthMsgs();
+};
+document.getElementById('show-signin').onclick = () => {
+  document.getElementById('signup-form').style.display='none';
+  document.getElementById('signin-form').style.display='block';
+  document.getElementById('to-signin').style.display='none';
+  document.getElementById('to-signup').style.display='inline';
+  document.getElementById('auth-sub').textContent = 'Golden Valley door-to-door tracker';
+  clearAuthMsgs();
+};
+
+document.getElementById('signin-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  clearAuthMsgs();
+  const email = document.getElementById('si-email').value.trim();
+  const password = document.getElementById('si-pass').value;
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) showAuthErr(error.message);
+});
+
+document.getElementById('signup-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  clearAuthMsgs();
+  const email = document.getElementById('su-email').value.trim();
+  const password = document.getElementById('su-pass').value;
+  const full_name = document.getElementById('su-name').value.trim();
+  const { data, error } = await sb.auth.signUp({ email, password, options: { data: { full_name } } });
+  if (error) { showAuthErr(error.message); return; }
+  if (data.session) return; // auto-confirmed, onAuthStateChange will boot the app
+  showAuthOk('Account created! Check your email to confirm, then log in.');
+  document.getElementById('signup-form').reset();
+});
+
+document.getElementById('signout-btn').onclick = async () => { await sb.auth.signOut(); location.reload(); };
+
+sb.auth.onAuthStateChange(async (event, session) => {
+  if (session) {
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    await boot(session);
+  }
+});
+
+// check existing session on load
+sb.auth.getSession().then(({ data }) => {
+  if (!data.session) {
+    document.getElementById('auth-screen').style.display = 'flex';
+  }
+});
+
+// ---------- APP BOOT ----------
+let map, clusterGroup;
+
+async function boot(session) {
+  if (state.booted) return;
+  state.booted = true;
+
+  const { data: profile } = await sb.from('profiles').select('*').eq('id', session.user.id).single();
+  state.profile = profile;
+  document.getElementById('who-box').innerHTML = `<b>${(profile?.full_name || session.user.email)}</b><br>${profile?.role === 'admin' ? 'Admin' : 'Estimator'}`;
+
+  document.getElementById('work-date').value = state.workDate;
+  document.getElementById('work-date').max = todayStr();
+
+  initMap();
+  await loadTerritories();
+  await loadStatusForDate(state.workDate);
+  renderAll();
+  subscribeRealtime();
+  wireUI();
+}
+
+function initMap() {
+  map = L.map('map', { zoomControl: true }).setView([44.9856, -93.3492], 13);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 20, attribution: '&copy; OpenStreetMap &copy; CARTO'
+  }).addTo(map);
+  clusterGroup = L.markerClusterGroup({ maxClusterRadius: 40, disableClusteringAtZoom: 17 });
+  map.addLayer(clusterGroup);
+}
+
+async function loadTerritories() {
+  const { data, error } = await sb.from('territories').select('*').order('street_name').order('block_low');
+  if (error) { console.error(error); return; }
+  state.territories = data;
+}
+
+async function loadStatusForDate(dateStr) {
+  const { data, error } = await sb.from('territory_status').select('*, profiles:updated_by(full_name)').eq('work_date', dateStr);
+  if (error) { console.error(error); return; }
+  state.statusByTerritory = {};
+  for (const row of data) state.statusByTerritory[row.territory_id] = row;
+}
+
+function statusFor(territoryId) {
+  return state.statusByTerritory[territoryId]?.status || 'not_started';
+}
+
+function priorityColor(score) {
+  // score 0 (newest) -> blue-ish gray, 100 (oldest) -> deep red
+  const s = Math.max(0, Math.min(100, score ?? 0)) / 100;
+  const r = Math.round(70 + s * (214 - 70));
+  const g = Math.round(120 - s * 80);
+  const b = Math.round(160 - s * 120);
+  return `rgb(${r},${g},${b})`;
+}
+
+function markerColorFor(t) {
+  if (state.view === 'priority') return priorityColor(t.priority_score);
+  return STATUS_COLOR[statusFor(t.id)];
+}
+
+function markerRadiusFor(t) {
+  return 6 + Math.min(t.home_count, 15) * 0.7;
+}
+
+function renderAll() {
+  clusterGroup.clearLayers();
+  state.markers = {};
+  for (const t of state.territories) {
+    if (t.centroid_lat == null || t.centroid_lng == null) continue;
+    const marker = L.circleMarker([t.centroid_lat, t.centroid_lng], {
+      radius: markerRadiusFor(t),
+      color: '#fff', weight: 1.5,
+      fillColor: markerColorFor(t), fillOpacity: 0.9
+    });
+    marker.on('click', () => openPanel(t.id));
+    marker.bindTooltip(`${t.name} · ${t.home_count} homes`, { direction: 'top', offset: [0,-6] });
+    clusterGroup.addLayer(marker);
+    state.markers[t.id] = marker;
+  }
+  renderStats();
+  renderLegend();
+  renderList();
+}
+
+function renderStats() {
+  let done=0, prog=0;
+  for (const t of state.territories) {
+    const s = statusFor(t.id);
+    if (s === 'completed') done++;
+    else if (s === 'in_progress') prog++;
+  }
+  document.getElementById('stat-done').textContent = done;
+  document.getElementById('stat-progress').textContent = prog;
+  document.getElementById('stat-remain').textContent = state.territories.length - done - prog;
+}
+
+function renderLegend() {
+  const body = document.getElementById('legend-body');
+  const title = document.getElementById('legend-title');
+  if (state.view === 'priority') {
+    title.textContent = 'Home age priority';
+    body.innerHTML = `
+      <div class="row"><span class="dot" style="background:${priorityColor(10)}"></span> Newer homes</div>
+      <div class="row"><span class="dot" style="background:${priorityColor(55)}"></span> Mid-age</div>
+      <div class="row"><span class="dot" style="background:${priorityColor(95)}"></span> Oldest homes (priority)</div>`;
+  } else {
+    title.textContent = "Today's status";
+    body.innerHTML = Object.entries(STATUS_LABEL).filter(([k])=>k!=='skipped').map(([k,label]) =>
+      `<div class="row"><span class="dot" style="background:${STATUS_COLOR[k]}"></span> ${label}</div>`).join('');
+  }
+}
+
+function renderList() {
+  const listBody = document.getElementById('list-body');
+  let items = state.territories.slice();
+  if (state.listFilter !== 'all') items = items.filter(t => statusFor(t.id) === state.listFilter);
+  if (state.view === 'priority') items.sort((a,b) => (b.priority_score??0) - (a.priority_score??0));
+  listBody.innerHTML = items.map(t => {
+    const s = statusFor(t.id);
+    return `<div class="terr-row" data-id="${t.id}">
+      <span class="dot" style="background:${STATUS_COLOR[s]}"></span>
+      <div style="flex:1;min-width:0;">
+        <div class="name">${t.name}</div>
+        <div class="sub">${t.home_count} homes${t.oldest_year_built ? ' · oldest ' + t.oldest_year_built : ''}</div>
+      </div>
+    </div>`;
+  }).join('') || `<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px;">No territories match this filter.</div>`;
+  listBody.querySelectorAll('.terr-row').forEach(el => {
+    el.onclick = () => { openPanel(el.dataset.id); document.getElementById('list-drawer').classList.remove('open'); };
+  });
+}
+
+// ---------- PANEL ----------
+async function openPanel(territoryId) {
+  state.selectedTerritoryId = territoryId;
+  const t = state.territories.find(x => x.id === territoryId);
+  if (!t) return;
+  document.getElementById('p-name').textContent = t.name;
+  document.getElementById('p-meta').textContent = `${t.home_count} homes · avg built ${t.avg_year_built ?? '—'} · oldest ${t.oldest_year_built ?? '—'}${t.priority_rank ? ' · priority #' + t.priority_rank + ' of ' + state.territories.length : ''}`;
+  const s = statusFor(territoryId);
+  const badge = document.getElementById('p-badge');
+  badge.textContent = STATUS_LABEL[s];
+  badge.className = 'badge ' + s;
+
+  const row = state.statusByTerritory[territoryId];
+  document.getElementById('p-notes').value = row?.notes || '';
+  document.getElementById('p-history').textContent = row
+    ? `${STATUS_LABEL[row.status]} by ${row.profiles?.full_name || 'someone'} · ${new Date(row.updated_at).toLocaleString()}`
+    : 'No activity yet for this date.';
+
+  document.getElementById('addr-title').textContent = `Homes in this block (${t.home_count})`;
+  const addrList = document.getElementById('p-addrs');
+  addrList.innerHTML = '<li>Loading…</li>';
+  document.getElementById('panel').classList.add('open');
+
+  const { data: parcels } = await sb.from('parcels').select('address, year_built').eq('territory_id', territoryId).order('address');
+  addrList.innerHTML = (parcels||[]).map(p => `<li><span>${p.address}</span><span class="yr">${p.year_built ?? ''}</span></li>`).join('');
+}
+
+document.getElementById('close-panel').onclick = () => document.getElementById('panel').classList.remove('open');
+
+async function setStatus(newStatus) {
+  const territoryId = state.selectedTerritoryId;
+  if (!territoryId) return;
+  const { data: { user } } = await sb.auth.getUser();
+  const payload = {
+    territory_id: territoryId, work_date: state.workDate, status: newStatus, updated_by: user.id
+  };
+  const { error } = await sb.from('territory_status').upsert(payload, { onConflict: 'territory_id,work_date' });
+  if (error) { alert('Could not update status: ' + error.message); return; }
+  await loadStatusForDate(state.workDate);
+  renderAll();
+  openPanel(territoryId);
+}
+
+document.getElementById('act-progress').onclick = () => setStatus('in_progress');
+document.getElementById('act-complete').onclick = () => setStatus('completed');
+document.getElementById('act-skip').onclick = () => setStatus('skipped');
+
+document.getElementById('save-note').onclick = async () => {
+  const territoryId = state.selectedTerritoryId;
+  if (!territoryId) return;
+  const { data: { user } } = await sb.auth.getUser();
+  const existing = state.statusByTerritory[territoryId];
+  const payload = {
+    territory_id: territoryId, work_date: state.workDate,
+    status: existing?.status || 'in_progress',
+    notes: document.getElementById('p-notes').value,
+    updated_by: user.id
+  };
+  const { error } = await sb.from('territory_status').upsert(payload, { onConflict: 'territory_id,work_date' });
+  if (error) { alert('Could not save note: ' + error.message); return; }
+  await loadStatusForDate(state.workDate);
+  renderAll();
+  openPanel(territoryId);
+};
+
+// ---------- SEARCH ----------
+const searchInput = document.getElementById('search-input');
+const searchResults = document.getElementById('search-results');
+let searchTimer;
+searchInput.addEventListener('input', () => {
+  clearTimeout(searchTimer);
+  const q = searchInput.value.trim();
+  if (q.length < 2) { searchResults.style.display='none'; return; }
+  searchTimer = setTimeout(() => runSearch(q), 220);
+});
+async function runSearch(q) {
+  const byStreet = state.territories.filter(t => t.name.toLowerCase().includes(q.toLowerCase())).slice(0,6);
+  const { data: addrMatches } = await sb.from('parcels').select('address, territory_id').ilike('address', `%${q}%`).limit(6);
+  const results = [
+    ...byStreet.map(t => ({ label: t.name, sub: `${t.home_count} homes`, territoryId: t.id })),
+    ...(addrMatches||[]).map(p => ({ label: p.address, sub: 'address', territoryId: p.territory_id }))
+  ];
+  searchResults.innerHTML = results.map(r => `<div class="res-item" data-id="${r.territoryId}">${r.label}<br><span style="color:var(--muted);font-size:11px;">${r.sub}</span></div>`).join('') || '<div class="res-item">No matches</div>';
+  searchResults.style.display = 'block';
+  searchResults.querySelectorAll('.res-item[data-id]').forEach(el => {
+    el.onclick = () => {
+      const t = state.territories.find(x => x.id === el.dataset.id);
+      if (t) { map.setView([t.centroid_lat, t.centroid_lng], 18); openPanel(t.id); }
+      searchResults.style.display = 'none'; searchInput.value = '';
+    };
+  });
+}
+
+// ---------- REALTIME ----------
+function subscribeRealtime() {
+  state.channel = sb.channel('territory_status_live')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'territory_status' }, async (payload) => {
+      const row = payload.new?.work_date ? payload.new : payload.old;
+      if (row?.work_date !== state.workDate) return;
+      await loadStatusForDate(state.workDate);
+      renderAll();
+      if (state.selectedTerritoryId) openPanel(state.selectedTerritoryId);
+    })
+    .subscribe();
+}
+
+// ---------- UI WIRING ----------
+function wireUI() {
+  document.getElementById('work-date').addEventListener('change', async (e) => {
+    state.workDate = e.target.value || todayStr();
+    await loadStatusForDate(state.workDate);
+    renderAll();
+  });
+
+  document.getElementById('vt-progress').onclick = () => setView('progress');
+  document.getElementById('vt-priority').onclick = () => setView('priority');
+
+  document.getElementById('toggle-list-btn').onclick = () => document.getElementById('list-drawer').classList.add('open');
+  document.getElementById('close-list').onclick = () => document.getElementById('list-drawer').classList.remove('open');
+
+  document.querySelectorAll('#list-filters button').forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll('#list-filters button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      state.listFilter = btn.dataset.f;
+      renderList();
+    };
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#search-box')) searchResults.style.display = 'none';
+  });
+}
+
+function setView(v) {
+  state.view = v;
+  document.getElementById('vt-progress').classList.toggle('active', v==='progress');
+  document.getElementById('vt-priority').classList.toggle('active', v==='priority');
+  renderAll();
+}
+</script>
+</body>
+</html>
