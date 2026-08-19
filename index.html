@@ -102,6 +102,18 @@
   #panel textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px;font-size:13px;font-family:inherit;resize:vertical;min-height:52px;}
   #panel .save-note{margin-top:6px;font-size:12px;padding:6px 10px;width:auto;}
   #panel .history{font-size:12.5px;color:var(--muted);}
+  #panel .navigate-btn{background:#1a73e8;margin-bottom:4px;}
+  #panel .navigate-btn:hover{background:#1558b0;}
+  #panel .navigate-hint{font-size:11px;color:var(--muted);margin-bottom:14px;}
+  #panel .assign-status{font-size:13px;color:var(--muted);margin:2px 0 8px;}
+  #panel .assign-admin{display:flex;gap:8px;margin-bottom:8px;}
+  #panel .assign-admin[hidden]{display:none;}
+  #panel .assign-admin select{flex:1;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;background:#fff;min-width:0;}
+  #panel .assign-btn{width:auto;padding:8px 14px;font-size:12.5px;white-space:nowrap;}
+  #panel .claim-btn{margin-bottom:8px;}
+  #panel .claim-btn[hidden]{display:none;}
+  #panel .assign-link{background:none;border:none;color:var(--blue);font-weight:600;font-size:12.5px;padding:4px 0 12px;cursor:pointer;display:block;}
+  #panel .assign-link[hidden]{display:none;}
 
   #list-drawer{position:absolute;left:0;top:0;bottom:0;width:320px;max-width:88vw;background:var(--card);box-shadow:2px 0 14px rgba(20,30,40,.1);transform:translateX(-100%);transition:transform .18s ease;z-index:1050;display:flex;flex-direction:column;}
   #list-drawer.open{transform:translateX(0);}
@@ -196,6 +208,8 @@
         <button data-f="not_started">Not started</button>
         <button data-f="in_progress">In progress</button>
         <button data-f="completed">Done</button>
+        <button data-f="unassigned">Unassigned</button>
+        <button data-f="mine">My routes</button>
       </div>
       <div class="l-body" id="list-body"></div>
     </div>
@@ -208,6 +222,19 @@
         <span class="badge" id="p-badge">—</span>
       </div>
       <div class="p-body">
+        <button class="btn btn-primary navigate-btn" id="navigate-btn">🧭 Navigate this route in Google Maps</button>
+        <div class="navigate-hint">Opens driving directions from your location to the start of this block, then the end.</div>
+
+        <div class="section-title">Route assignment</div>
+        <div class="assign-status" id="assign-status">Not assigned yet.</div>
+        <div class="assign-admin" id="assign-admin" hidden>
+          <select id="assign-select"><option value="">— Select estimator —</option></select>
+          <button class="btn btn-primary assign-btn" id="assign-btn">Assign</button>
+        </div>
+        <button class="assign-link" id="unassign-btn" hidden>Unassign this block</button>
+        <button class="btn btn-primary claim-btn" id="claim-btn" hidden>Claim this route</button>
+        <button class="assign-link" id="release-btn" hidden>Release this route</button>
+
         <div class="actions" id="actions-row">
           <button class="act-progress" id="act-progress">Start</button>
           <button class="act-complete" id="act-complete">Mark done</button>
@@ -246,8 +273,12 @@ const STATUS_LABEL = { not_started: 'Not started', in_progress: 'In progress', c
 
 let state = {
   profile: null,
+  userId: null,
   territories: [],        // all territories (static reference data)
   statusByTerritory: {},  // territory_id -> status row for selected date
+  assignmentsByTerritory: {}, // territory_id -> assignment row for selected date
+  estimators: [],         // all profiles, for the admin "assign to" dropdown
+  currentParcels: [],     // addresses for the currently open panel's territory
   markers: {},            // territory_id -> leaflet marker
   selectedTerritoryId: null,
   workDate: todayStr(),
@@ -334,6 +365,7 @@ async function boot(session) {
 
   const { data: profile } = await sb.from('profiles').select('*').eq('id', session.user.id).single();
   state.profile = profile;
+  state.userId = session.user.id;
   document.getElementById('who-box').innerHTML = `<b>${(profile?.full_name || session.user.email)}</b><br>${profile?.role === 'admin' ? 'Admin' : 'Estimator'}`;
 
   document.getElementById('work-date').value = state.workDate;
@@ -342,6 +374,8 @@ async function boot(session) {
   initMap();
   await loadTerritories();
   await loadStatusForDate(state.workDate);
+  await loadAssignmentsForDate(state.workDate);
+  await loadEstimators();
   renderAll();
   subscribeRealtime();
   wireUI();
@@ -407,6 +441,29 @@ function statusFor(territoryId) {
   return state.statusByTerritory[territoryId]?.status || 'not_started';
 }
 
+async function loadAssignmentsForDate(dateStr) {
+  const { data, error } = await sb.from('territory_assignments')
+    .select('*, assignee:assigned_to(full_name), assigner:assigned_by(full_name)')
+    .eq('work_date', dateStr);
+  if (error) { console.error(error); return; }
+  state.assignmentsByTerritory = {};
+  for (const row of data) state.assignmentsByTerritory[row.territory_id] = row;
+}
+
+async function loadEstimators() {
+  const { data, error } = await sb.from('profiles').select('id, full_name, role').order('full_name');
+  if (error) { console.error(error); return; }
+  state.estimators = data || [];
+}
+
+function assignmentFor(territoryId) {
+  return state.assignmentsByTerritory[territoryId] || null;
+}
+
+function assigneeNameFor(territoryId) {
+  return assignmentFor(territoryId)?.assignee?.full_name || null;
+}
+
 function priorityColor(score) {
   // score 0 (newest) -> blue-ish gray, 100 (oldest) -> deep red
   const s = Math.max(0, Math.min(100, score ?? 0)) / 100;
@@ -438,7 +495,8 @@ function renderAll() {
       priorityScore: t.priority_score ?? 0
     });
     marker.on('click', () => openPanel(t.id));
-    marker.bindTooltip(`${t.name} · ${t.home_count} homes`, { direction: 'top', offset: [0,-6] });
+    const who = assigneeNameFor(t.id);
+    marker.bindTooltip(`${t.name} · ${t.home_count} homes${who ? ' · ' + who : ''}`, { direction: 'top', offset: [0,-6] });
     clusterGroup.addLayer(marker);
     state.markers[t.id] = marker;
   }
@@ -478,15 +536,18 @@ function renderLegend() {
 function renderList() {
   const listBody = document.getElementById('list-body');
   let items = state.territories.slice();
-  if (state.listFilter !== 'all') items = items.filter(t => statusFor(t.id) === state.listFilter);
+  if (state.listFilter === 'mine') items = items.filter(t => assignmentFor(t.id)?.assigned_to === state.userId);
+  else if (state.listFilter === 'unassigned') items = items.filter(t => !assignmentFor(t.id));
+  else if (state.listFilter !== 'all') items = items.filter(t => statusFor(t.id) === state.listFilter);
   if (state.view === 'priority') items.sort((a,b) => (b.priority_score??0) - (a.priority_score??0));
   listBody.innerHTML = items.map(t => {
     const s = statusFor(t.id);
+    const who = assigneeNameFor(t.id);
     return `<div class="terr-row" data-id="${t.id}">
       <span class="dot" style="background:${STATUS_COLOR[s]}"></span>
       <div style="flex:1;min-width:0;">
         <div class="name">${t.name}</div>
-        <div class="sub">${t.home_count} homes${t.oldest_year_built ? ' · oldest ' + t.oldest_year_built : ''}</div>
+        <div class="sub">${t.home_count} homes${t.oldest_year_built ? ' · oldest ' + t.oldest_year_built : ''}${who ? ' · ' + who : ''}</div>
       </div>
     </div>`;
   }).join('') || `<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px;">No territories match this filter.</div>`;
@@ -509,6 +570,7 @@ async function openPanel(territoryId) {
   document.getElementById('act-reset').hidden = (s === 'not_started');
   document.getElementById('actions-row').hidden = false;
   document.getElementById('reset-confirm').hidden = true;
+  renderAssignmentSection(territoryId);
 
   const row = state.statusByTerritory[territoryId];
   document.getElementById('p-notes').value = row?.notes || '';
@@ -522,10 +584,104 @@ async function openPanel(territoryId) {
   document.getElementById('panel').classList.add('open');
 
   const { data: parcels } = await sb.from('parcels').select('address, year_built').eq('territory_id', territoryId).order('address');
-  addrList.innerHTML = (parcels||[]).map(p => `<li><span>${p.address}</span><span class="yr">${p.year_built ?? ''}</span></li>`).join('');
+  state.currentParcels = parcels || [];
+  addrList.innerHTML = state.currentParcels.map(p => `<li><span>${p.address}</span><span class="yr">${p.year_built ?? ''}</span></li>`).join('');
 }
 
 document.getElementById('close-panel').onclick = () => document.getElementById('panel').classList.remove('open');
+
+// ---------- ROUTE ASSIGNMENT ----------
+function renderAssignmentSection(territoryId) {
+  const assignment = assignmentFor(territoryId);
+  const isAdmin = state.profile?.role === 'admin';
+  const isMine = !!assignment && assignment.assigned_to === state.userId;
+
+  const statusEl = document.getElementById('assign-status');
+  if (assignment) {
+    statusEl.textContent = isMine
+      ? `Assigned to you${assignment.assigner?.full_name ? ' (by ' + assignment.assigner.full_name + ')' : ' (self-claimed)'}`
+      : `Assigned to ${assignment.assignee?.full_name || 'someone'}`;
+  } else {
+    statusEl.textContent = 'Not assigned yet.';
+  }
+
+  const adminBox = document.getElementById('assign-admin');
+  const unassignBtn = document.getElementById('unassign-btn');
+  adminBox.hidden = !isAdmin;
+  unassignBtn.hidden = !(isAdmin && assignment);
+  if (isAdmin) {
+    const select = document.getElementById('assign-select');
+    select.innerHTML = '<option value="">— Select estimator —</option>' + state.estimators.map(e =>
+      `<option value="${e.id}"${assignment?.assigned_to === e.id ? ' selected' : ''}>${e.full_name || 'Unnamed'}${e.role === 'admin' ? ' (admin)' : ''}</option>`
+    ).join('');
+  }
+
+  document.getElementById('claim-btn').hidden = isAdmin || !!assignment;
+  document.getElementById('release-btn').hidden = isAdmin || !isMine;
+}
+
+document.getElementById('assign-btn').onclick = async () => {
+  const territoryId = state.selectedTerritoryId;
+  if (!territoryId) return;
+  const estimatorId = document.getElementById('assign-select').value;
+  if (!estimatorId) { alert('Choose an estimator first.'); return; }
+  const payload = { territory_id: territoryId, work_date: state.workDate, assigned_to: estimatorId, assigned_by: state.userId };
+  const { error } = await sb.from('territory_assignments').upsert(payload, { onConflict: 'territory_id,work_date' });
+  if (error) { alert('Could not assign this block: ' + error.message); return; }
+  await loadAssignmentsForDate(state.workDate);
+  renderAll();
+  openPanel(territoryId);
+};
+
+document.getElementById('unassign-btn').onclick = async () => {
+  const territoryId = state.selectedTerritoryId;
+  if (!territoryId) return;
+  const { error } = await sb.from('territory_assignments').delete().eq('territory_id', territoryId).eq('work_date', state.workDate);
+  if (error) { alert('Could not unassign this block: ' + error.message); return; }
+  await loadAssignmentsForDate(state.workDate);
+  renderAll();
+  openPanel(territoryId);
+};
+
+document.getElementById('claim-btn').onclick = async () => {
+  const territoryId = state.selectedTerritoryId;
+  if (!territoryId) return;
+  const payload = { territory_id: territoryId, work_date: state.workDate, assigned_to: state.userId, assigned_by: state.userId };
+  const { error } = await sb.from('territory_assignments').insert(payload);
+  if (error) {
+    if (error.code === '23505') alert('Someone just claimed this block — pick another one.');
+    else alert('Could not claim this route: ' + error.message);
+    await loadAssignmentsForDate(state.workDate);
+    renderAll();
+    openPanel(territoryId);
+    return;
+  }
+  await loadAssignmentsForDate(state.workDate);
+  renderAll();
+  openPanel(territoryId);
+};
+
+document.getElementById('release-btn').onclick = async () => {
+  const territoryId = state.selectedTerritoryId;
+  if (!territoryId) return;
+  const { error } = await sb.from('territory_assignments').delete().eq('territory_id', territoryId).eq('work_date', state.workDate);
+  if (error) { alert('Could not release this route: ' + error.message); return; }
+  await loadAssignmentsForDate(state.workDate);
+  renderAll();
+  openPanel(territoryId);
+};
+
+// ---------- GOOGLE MAPS NAVIGATION ----------
+document.getElementById('navigate-btn').onclick = () => {
+  const parcels = state.currentParcels || [];
+  if (!parcels.length) { alert('No addresses found for this block yet.'); return; }
+  const cityState = 'Golden Valley, MN';
+  const first = `${parcels[0].address}, ${cityState}`;
+  const last = `${parcels[parcels.length - 1].address}, ${cityState}`;
+  let url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(last)}&travelmode=driving`;
+  if (parcels.length > 1) url += `&waypoints=${encodeURIComponent(first)}`;
+  window.open(url, '_blank', 'noopener');
+};
 
 async function setStatus(newStatus) {
   const territoryId = state.selectedTerritoryId;
@@ -626,6 +782,13 @@ function subscribeRealtime() {
       renderAll();
       if (state.selectedTerritoryId) openPanel(state.selectedTerritoryId);
     })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'territory_assignments' }, async (payload) => {
+      const row = payload.new?.work_date ? payload.new : payload.old;
+      if (row?.work_date !== state.workDate) return;
+      await loadAssignmentsForDate(state.workDate);
+      renderAll();
+      if (state.selectedTerritoryId) openPanel(state.selectedTerritoryId);
+    })
     .subscribe();
 }
 
@@ -634,6 +797,7 @@ function wireUI() {
   document.getElementById('work-date').addEventListener('change', async (e) => {
     state.workDate = e.target.value || todayStr();
     await loadStatusForDate(state.workDate);
+    await loadAssignmentsForDate(state.workDate);
     renderAll();
   });
 
