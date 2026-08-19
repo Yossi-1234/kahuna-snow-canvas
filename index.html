@@ -51,7 +51,7 @@
   #main{flex:1;position:relative;min-height:0;}
   #map{position:absolute;inset:0;}
 
-  #stats-bar{position:absolute;top:10px;left:10px;z-index:800;background:rgba(255,255,255,.96);border-radius:10px;box-shadow:0 2px 10px rgba(20,30,40,.12);padding:8px 12px;font-size:12px;display:flex;gap:12px;}
+  #stats-bar{position:absolute;top:10px;left:60px;z-index:800;background:rgba(255,255,255,.96);border-radius:10px;box-shadow:0 2px 10px rgba(20,30,40,.12);padding:8px 12px;font-size:12px;display:flex;gap:12px;}
   #stats-bar .stat b{display:block;font-size:15px;}
   #stats-bar .stat.done b{color:var(--green);}
   #stats-bar .stat.progress b{color:var(--amber);}
@@ -116,6 +116,8 @@
     #stats-bar{font-size:11px;padding:6px 10px;gap:8px;}
     #panel{width:100%;max-width:100%;}
   }
+
+  .kahuna-cluster-icon{background:transparent!important;border:none!important;}
 </style>
 </head>
 <body>
@@ -333,8 +335,42 @@ function initMap() {
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
     maxZoom: 20, attribution: '&copy; OpenStreetMap &copy; CARTO'
   }).addTo(map);
-  clusterGroup = L.markerClusterGroup({ maxClusterRadius: 40, disableClusteringAtZoom: 17 });
+  clusterGroup = L.markerClusterGroup({
+    maxClusterRadius: 40,
+    disableClusteringAtZoom: 17,
+    iconCreateFunction: clusterIcon
+  });
   map.addLayer(clusterGroup);
+}
+
+function clusterIcon(cluster) {
+  const children = cluster.getAllChildMarkers();
+  const total = children.length;
+  let color;
+  if (state.view === 'priority') {
+    let sum = 0, n = 0;
+    for (const m of children) {
+      if (typeof m.options.priorityScore === 'number') { sum += m.options.priorityScore; n++; }
+    }
+    color = priorityColor(n ? sum / n : 0);
+  } else {
+    let completed = 0, active = 0;
+    for (const m of children) {
+      const s = m.options.statusKey;
+      if (s === 'completed') completed++;
+      else if (s === 'in_progress' || s === 'skipped') active++;
+    }
+    if (total > 0 && completed === total) color = STATUS_COLOR.completed;
+    else if (completed > 0 || active > 0) color = STATUS_COLOR.in_progress;
+    else color = STATUS_COLOR.not_started;
+  }
+  const size = total < 10 ? 32 : total < 30 ? 38 : 46;
+  return L.divIcon({
+    html: `<div style="background:${color};width:${size}px;height:${size}px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35);">${total}</div>`,
+    className: 'kahuna-cluster-icon',
+    iconSize: L.point(size, size),
+    iconAnchor: L.point(size / 2, size / 2)
+  });
 }
 
 async function loadTerritories() {
@@ -380,7 +416,9 @@ function renderAll() {
     const marker = L.circleMarker([t.centroid_lat, t.centroid_lng], {
       radius: markerRadiusFor(t),
       color: '#fff', weight: 1.5,
-      fillColor: markerColorFor(t), fillOpacity: 0.9
+      fillColor: markerColorFor(t), fillOpacity: 0.9,
+      statusKey: statusFor(t.id),
+      priorityScore: t.priority_score ?? 0
     });
     marker.on('click', () => openPanel(t.id));
     marker.bindTooltip(`${t.name} · ${t.home_count} homes`, { direction: 'top', offset: [0,-6] });
