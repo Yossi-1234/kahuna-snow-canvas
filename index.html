@@ -88,6 +88,13 @@
   #panel .actions button.act-reset{color:var(--muted);border-color:var(--line);}
   #panel .actions button:hover{filter:brightness(.96);}
   #panel .actions button.act-reset[hidden]{display:none;}
+  #panel .reset-confirm{background:#fbeaea;border:1px solid #eab5b0;border-radius:8px;padding:10px 12px;margin-bottom:16px;}
+  #panel .reset-confirm[hidden]{display:none;}
+  #panel .reset-confirm-text{font-size:12.5px;color:#7a2e28;font-weight:600;margin-bottom:8px;}
+  #panel .reset-confirm-buttons{display:flex;gap:8px;}
+  #panel .reset-confirm-buttons button{flex:1;padding:8px 4px;border-radius:8px;border:1px solid var(--line);font-size:12.5px;font-weight:700;cursor:pointer;}
+  #panel .act-reset-yes{background:var(--red);color:#fff;border-color:var(--red)!important;}
+  #panel .act-reset-no{background:#fff;color:var(--muted);}
   #panel .section-title{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:14px 0 6px;}
   #panel .addr-list{list-style:none;margin:0;padding:0;font-size:13.5px;}
   #panel .addr-list li{padding:6px 0;border-bottom:1px solid #f0f2f4;display:flex;justify-content:space-between;}
@@ -201,11 +208,18 @@
         <span class="badge" id="p-badge">—</span>
       </div>
       <div class="p-body">
-        <div class="actions">
+        <div class="actions" id="actions-row">
           <button class="act-progress" id="act-progress">Start</button>
           <button class="act-complete" id="act-complete">Mark done</button>
           <button class="act-skip" id="act-skip">Skip</button>
           <button class="act-reset" id="act-reset" hidden>Cancel</button>
+        </div>
+        <div class="reset-confirm" id="reset-confirm" hidden>
+          <div class="reset-confirm-text">Cancel today's status for this block and set it back to Not started?</div>
+          <div class="reset-confirm-buttons">
+            <button class="act-reset-yes" id="confirm-reset-yes">Yes, cancel it</button>
+            <button class="act-reset-no" id="confirm-reset-no">No, keep it</button>
+          </div>
         </div>
         <div class="section-title">Notes for this date</div>
         <textarea id="p-notes" placeholder="e.g. left hangers on 6 of 8 doors, 2 dogs out"></textarea>
@@ -493,6 +507,8 @@ async function openPanel(territoryId) {
   badge.textContent = STATUS_LABEL[s];
   badge.className = 'badge ' + s;
   document.getElementById('act-reset').hidden = (s === 'not_started');
+  document.getElementById('actions-row').hidden = false;
+  document.getElementById('reset-confirm').hidden = true;
 
   const row = state.statusByTerritory[territoryId];
   document.getElementById('p-notes').value = row?.notes || '';
@@ -525,10 +541,20 @@ async function setStatus(newStatus) {
   openPanel(territoryId);
 }
 
+function showResetConfirm() {
+  if (!state.selectedTerritoryId) return;
+  document.getElementById('actions-row').hidden = true;
+  document.getElementById('reset-confirm').hidden = false;
+}
+
+function hideResetConfirm() {
+  document.getElementById('actions-row').hidden = false;
+  document.getElementById('reset-confirm').hidden = true;
+}
+
 async function resetStatus() {
   const territoryId = state.selectedTerritoryId;
   if (!territoryId) return;
-  if (!confirm('Cancel today\'s status for this block and set it back to Not started?')) return;
   const { error } = await sb.from('territory_status').delete()
     .eq('territory_id', territoryId).eq('work_date', state.workDate);
   if (error) { alert('Could not cancel: ' + error.message); return; }
@@ -540,7 +566,9 @@ async function resetStatus() {
 document.getElementById('act-progress').onclick = () => setStatus('in_progress');
 document.getElementById('act-complete').onclick = () => setStatus('completed');
 document.getElementById('act-skip').onclick = () => setStatus('skipped');
-document.getElementById('act-reset').onclick = () => resetStatus();
+document.getElementById('act-reset').onclick = () => showResetConfirm();
+document.getElementById('confirm-reset-yes').onclick = () => resetStatus();
+document.getElementById('confirm-reset-no').onclick = () => hideResetConfirm();
 
 document.getElementById('save-note').onclick = async () => {
   const territoryId = state.selectedTerritoryId;
