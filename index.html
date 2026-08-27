@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Kahuna Snow Canvass — Golden Valley</title>
+<meta name="theme-color" content="#1d6fb8">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Kahuna Snow">
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAAFKUlEQVR4nO3d3XHbOBiGUWZn24jbcTlJKS4nbseNZC/ijD1eSpQogMSH95zb3czwBw8Aamjp2/cfv34vEOqfsw8AziQAogmAaAIgmgCIJgCiCYBoAiCaAIgmAKIJgGgCIJoAiCYAogmAaAIgmgCIJgCiCYBoAiCaAIgmAKIJgGgCIJoAiCYAogmAaAIgmgCIJgCiCYBoAiCaAIgmAKIJgGgCIJoAiCYAogmAaAIgmgCIJgCiCYBoAiCaAFa8vTyffQjNzXhOLXz7/uPX77MPYhRfB8nTz9eTjqStWc+rhX/PPoARpM2Of89XCLZAy7JcHggzhHHpHAz+P6wAG9YG0KiDZ4Zgj2YFeDfqoO4h6Vy3CIBoAiCaAN7dun8eeftw67F5VvggAKIJYMmcERPPeY2PQZePrUPKoBh5G3c0r0Ks2Aph1AFU9bjPZAu0YmugVFwpDP51VoAN9wz2owbZiMdUlRVggwE0NwFMTLzbBLDh7eW57ECq+KxyNAHcwECalwCumGHgz3AOPQmAaAK4YKaZc6Zzac2rEBfM8npE1Qf4owhgw+cBVCUGg/52tkB3ePr5enVwnR3I1vHxfwLY4cxB5lse2hLATmd8lcrZK8yMBPCAUb5PyOy/nwCKsPXpQwAPGmUVYB8BFGD270cADVgF6hJAZ49GYPbvSwCNGJA1CaCh1lshs39/AhiU54djCKCx3g/EZv+2BDAgW5/jCKADH4vWIYCDbUVg9j+WADoxYGsQQEf3boXM/sfzJ5En8TwwhogV4MzB9ujsfdbsnxJoyQD23JyKN7TS4K94fZelaADLcvsF//z/vb08l7pRRx/r1+uz5xpXUy6AFgO68g3rZe913BPMSMoFsObeT1W2/ltLvV6HbmnPdao42NeU+oWYWy76133znn/TUouB0uv4Kl7P1oYNYJYZhj9GjWKKLRDsJQCiCYBoAiDasA/Bl1x7OB7xE4uRPwValvafBI36sHvJFCvApa8F37oZ1W5WD3uu0Uxfw14ugK8Xfs+NOPIGVngZbu/1aHEvzlYugL9uvWkz3KSj7LlW1VeDkn8P0GK2Yt3e30aren3LrgD3qHpzzpRyzSICOFOFl+GSldwCVXHvx4UG+/GsACe4tL3wfULHE0AnvuGhBgEMxipwLAF00Gv2F0F7AhiQbdJxBNBYq9nfVugYAmjI4KxHAAfYu6WxCvQngEZ87FmTAAZnFehLAA2cNfuL4HECeNARg9A2qh8BdNJ60NoK9SGAB3jwrU8AhVgF2hPADte+lr3Sj1oggLuM8AMb1wIb4fiq8RdhG+4ZUKPs/T8f8yjHNCoBXDDLTPr3PISwzhbogpkGzEzn0poAiCaAK2aYOWc4h54EcIOKg6jiMZ9BABuefr6WfCB+e3kWwQ0EMLGK4R5NABsMormV+4WYo2wN/BG3FzP9cstRrAArKg7+LVaydQL4pPq7NFthVj+/HrwKsdR83+cRXo/4YAVYMgdC4jmvEQDRBPDu1hlx5D30rcdm9v8gAKIJgGgCeDfy1qa1pHPd4mPQDZX2y354735WgGXu7/fxVSrXWQGW/b+OXtUMYbfiZbgVM75LP+M5tSAAonkGIJoAiCYAogmAaAIgmgCIJgCiCYBoAiCaAIgmAKIJgGgCIJoAiCYAogmAaAIgmgCIJgCiCYBoAiCaAIgmAKIJgGgCIJoAiCYAogmAaAIgmgCIJgCiCYBoAiCaAIgmAKIJgGgCIJoAiCYAogmAaAIgmgCIJgCiCYBo/wG9ydUif0NBBwAAAABJRU5ErkJggg==">
+<link id="app-manifest" rel="manifest">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
@@ -136,11 +143,26 @@
 
   @media (max-width:640px){
     header .who{display:none;}
-    #stats-bar{font-size:11px;padding:6px 10px;gap:8px;}
+    /* Address/search bar spans the top, full width */
+    #search-box{top:10px;left:10px;right:10px;width:auto;}
+    /* Tracker sits BELOW the search bar so they never overlap; scrolls sideways if tight */
+    #stats-bar{top:56px;left:10px;right:10px;max-width:none;font-size:11px;padding:6px 10px;gap:10px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+    /* List toggle drops below the tracker */
+    #toggle-list-btn{top:104px;left:10px;}
     #panel{width:100%;max-width:100%;}
   }
 
   .kahuna-cluster-icon{background:transparent!important;border:none!important;}
+
+  /* Add to Home Screen banner */
+  #a2hs{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:1200;
+    display:none;align-items:center;gap:10px;background:var(--ink);color:#fff;
+    padding:10px 12px 10px 16px;border-radius:12px;box-shadow:0 6px 24px rgba(20,30,40,.28);
+    font-size:13.5px;max-width:calc(100vw - 24px);}
+  #a2hs .a2hs-txt{line-height:1.2;}
+  #a2hs button{border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;padding:8px 12px;}
+  #a2hs #a2hs-add{background:var(--blue);color:#fff;}
+  #a2hs #a2hs-close{background:transparent;color:#c7d0da;padding:8px 6px;font-size:16px;}
 </style>
 </head>
 <body>
@@ -170,6 +192,12 @@
       <span id="to-signin" style="display:none;">Already have an account? <button type="button" class="btn-link" id="show-signin">Log in</button></span>
     </div>
   </div>
+</div>
+
+<div id="a2hs">
+  <span class="a2hs-txt">📲 Add Kahuna to your home screen</span>
+  <button id="a2hs-add">Add</button>
+  <button id="a2hs-close" aria-label="Dismiss">✕</button>
 </div>
 
 <div id="app">
@@ -865,6 +893,64 @@ function setView(v) {
   document.getElementById('vt-priority').classList.toggle('active', v==='priority');
   renderAll();
 }
+
+/* ---- Add to Home Screen (installable web app) ---- */
+(function initAddToHomeScreen(){
+  // Build a web app manifest at runtime (keeps everything in this one file).
+  try {
+    const manifest = {
+      name: "Kahuna Snow Canvass",
+      short_name: "Kahuna Snow",
+      start_url: ".",
+      scope: ".",
+      display: "standalone",
+      background_color: "#f6f8fa",
+      theme_color: "#1d6fb8",
+      icons: [
+        { src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAAFKUlEQVR4nO3d3XHbOBiGUWZn24jbcTlJKS4nbseNZC/ijD1eSpQogMSH95zb3czwBw8Aamjp2/cfv34vEOqfsw8AziQAogmAaAIgmgCIJgCiCYBoAiCaAIgmAKIJgGgCIJoAiCYAogmAaAIgmgCIJgCiCYBoAiCaAIgmAKIJgGgCIJoAiCYAogmAaAIgmgCIJgCiCYBoAiCaAIgmAKIJgGgCIJoAiCYAogmAaAIgmgCIJgCiCYBoAiCaAFa8vTyffQjNzXhOLXz7/uPX77MPYhRfB8nTz9eTjqStWc+rhX/PPoARpM2Of89XCLZAy7JcHggzhHHpHAz+P6wAG9YG0KiDZ4Zgj2YFeDfqoO4h6Vy3CIBoAiCaAN7dun8eeftw67F5VvggAKIJYMmcERPPeY2PQZePrUPKoBh5G3c0r0Ks2Aph1AFU9bjPZAu0YmugVFwpDP51VoAN9wz2owbZiMdUlRVggwE0NwFMTLzbBLDh7eW57ECq+KxyNAHcwECalwCumGHgz3AOPQmAaAK4YKaZc6Zzac2rEBfM8npE1Qf4owhgw+cBVCUGg/52tkB3ePr5enVwnR3I1vHxfwLY4cxB5lse2hLATmd8lcrZK8yMBPCAUb5PyOy/nwCKsPXpQwAPGmUVYB8BFGD270cADVgF6hJAZ49GYPbvSwCNGJA1CaCh1lshs39/AhiU54djCKCx3g/EZv+2BDAgW5/jCKADH4vWIYCDbUVg9j+WADoxYGsQQEf3boXM/sfzJ5En8TwwhogV4MzB9ujsfdbsnxJoyQD23JyKN7TS4K94fZelaADLcvsF//z/vb08l7pRRx/r1+uz5xpXUy6AFgO68g3rZe913BPMSMoFsObeT1W2/ltLvV6HbmnPdao42NeU+oWYWy76133znn/TUouB0uv4Kl7P1oYNYJYZhj9GjWKKLRDsJQCiCYBoAiDasA/Bl1x7OB7xE4uRPwValvafBI36sHvJFCvApa8F37oZ1W5WD3uu0Uxfw14ugK8Xfs+NOPIGVngZbu/1aHEvzlYugL9uvWkz3KSj7LlW1VeDkn8P0GK2Yt3e30aren3LrgD3qHpzzpRyzSICOFOFl+GSldwCVXHvx4UG+/GsACe4tL3wfULHE0AnvuGhBgEMxipwLAF00Gv2F0F7AhiQbdJxBNBYq9nfVugYAmjI4KxHAAfYu6WxCvQngEZ87FmTAAZnFehLAA2cNfuL4HECeNARg9A2qh8BdNJ60NoK9SGAB3jwrU8AhVgF2hPADte+lr3Sj1oggLuM8AMb1wIb4fiq8RdhG+4ZUKPs/T8f8yjHNCoBXDDLTPr3PISwzhbogpkGzEzn0poAiCaAK2aYOWc4h54EcIOKg6jiMZ9BABuefr6WfCB+e3kWwQ0EMLGK4R5NABsMormV+4WYo2wN/BG3FzP9cstRrAArKg7+LVaydQL4pPq7NFthVj+/HrwKsdR83+cRXo/4YAVYMgdC4jmvEQDRBPDu1hlx5D30rcdm9v8gAKIJgGgCeDfy1qa1pHPd4mPQDZX2y354735WgGXu7/fxVSrXWQGW/b+OXtUMYbfiZbgVM75LP+M5tSAAonkGIJoAiCYAogmAaAIgmgCIJgCiCYBoAiCaAIgmAKIJgGgCIJoAiCYAogmAaAIgmgCIJgCiCYBoAiCaAIgmAKIJgGgCIJoAiCYAogmAaAIgmgCIJgCiCYBoAiCaAIgmAKIJgGgCIJoAiCYAogmAaAIgmgCIJgCiCYBo/wG9ydUif0NBBwAAAABJRU5ErkJggg==", sizes: "192x192", type: "image/png", purpose: "any" },
+        { src: "data:image/png;base64,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", sizes: "512x512", type: "image/png", purpose: "any" }
+      ]
+    };
+    const url = URL.createObjectURL(new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" }));
+    const link = document.getElementById('app-manifest');
+    if (link) link.href = url;
+  } catch (e) { /* non-fatal */ }
+
+  const banner = document.getElementById('a2hs');
+  if (!banner) return;
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  let dismissed = false;
+  try { dismissed = localStorage.getItem('a2hs_dismissed') === '1'; } catch (e) {}
+  let deferredPrompt = null;
+
+  function show(){ if (!isStandalone && !dismissed) banner.style.display = 'flex'; }
+  function hide(){ banner.style.display = 'none'; }
+
+  // Android / desktop Chrome: capture the native prompt
+  window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; show(); });
+  // iOS Safari never fires the above, so offer instructions instead
+  if (isIOS && !isStandalone) show();
+
+  document.getElementById('a2hs-add').addEventListener('click', async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      try { await deferredPrompt.userChoice; } catch (e) {}
+      deferredPrompt = null;
+      hide();
+    } else if (isIOS) {
+      alert("To add Kahuna to your home screen:\n\n1. Tap the Share button (the square with an up-arrow) at the bottom of Safari.\n2. Scroll down and tap “Add to Home Screen.”\n3. Tap “Add.”");
+    } else {
+      alert("To install: open your browser menu (⋮) and choose “Add to Home screen” or “Install app.”");
+    }
+  });
+  document.getElementById('a2hs-close').addEventListener('click', () => {
+    hide();
+    try { localStorage.setItem('a2hs_dismissed','1'); } catch (e) {}
+  });
+  window.addEventListener('appinstalled', hide);
+})();
+
 </script>
 </body>
 </html>
