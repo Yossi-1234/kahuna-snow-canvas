@@ -51,11 +51,13 @@
   #main{flex:1;position:relative;min-height:0;}
   #map{position:absolute;inset:0;}
 
-  #stats-bar{position:absolute;top:10px;left:60px;z-index:800;background:rgba(255,255,255,.96);border-radius:10px;box-shadow:0 2px 10px rgba(20,30,40,.12);padding:8px 12px;font-size:12px;display:flex;gap:12px;}
+  #stats-bar{position:absolute;top:10px;left:60px;z-index:800;background:rgba(255,255,255,.96);border-radius:10px;box-shadow:0 2px 10px rgba(20,30,40,.12);padding:8px 12px;font-size:12px;display:flex;gap:12px;flex-wrap:wrap;max-width:calc(100vw - 72px);}
   #stats-bar .stat b{display:block;font-size:15px;}
   #stats-bar .stat.done b{color:var(--green);}
   #stats-bar .stat.progress b{color:var(--amber);}
   #stats-bar .stat.remain b{color:var(--gray);}
+  #stats-bar .stat.homes{border-left:1px solid #e3e8ec;padding-left:12px;}
+  #stats-bar .stat.homes b{color:var(--ink);white-space:nowrap;}
 
   #legend{position:absolute;bottom:14px;left:10px;z-index:800;background:rgba(255,255,255,.96);border-radius:10px;box-shadow:0 2px 10px rgba(20,30,40,.12);padding:8px 12px;font-size:11.5px;color:var(--muted);}
   #legend .row{display:flex;align-items:center;gap:6px;margin-top:3px;}
@@ -191,6 +193,7 @@
       <div class="stat done"><b id="stat-done">0</b>Done</div>
       <div class="stat progress"><b id="stat-progress">0</b>In progress</div>
       <div class="stat remain"><b id="stat-remain">0</b>Not started</div>
+      <div class="stat homes"><b id="stat-homes">0</b>Homes done</div>
     </div>
     <div id="search-box">
       <input type="text" id="search-input" placeholder="Search street or address…">
@@ -527,15 +530,22 @@ function renderAll() {
 }
 
 function renderStats() {
-  let done=0, prog=0;
+  let done=0, prog=0, homesDone=0, totalHomes=0;
   for (const t of state.territories) {
+    const homes = t.home_count || 0;
+    totalHomes += homes;
     const s = statusFor(t.id);
-    if (s === 'completed') done++;
+    if (s === 'completed') { done++; homesDone += homes; }
     else if (s === 'in_progress') prog++;
   }
   document.getElementById('stat-done').textContent = done;
   document.getElementById('stat-progress').textContent = prog;
   document.getElementById('stat-remain').textContent = state.territories.length - done - prog;
+  const pct = totalHomes ? Math.round(homesDone / totalHomes * 100) : 0;
+  document.getElementById('stat-homes').textContent =
+    `${homesDone.toLocaleString()} / ${totalHomes.toLocaleString()}`;
+  document.querySelector('.stat.homes').title =
+    `${homesDone.toLocaleString()} of ${totalHomes.toLocaleString()} homes done (${pct}%)`;
 }
 
 function renderLegend() {
