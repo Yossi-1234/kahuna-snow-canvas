@@ -424,20 +424,38 @@ function clusterIcon(cluster) {
   });
 }
 
+// Supabase's API returns at most ~1,000 rows per request (the project "Max rows"
+// setting). Page through the full result so large tables/functions load completely
+// instead of being silently truncated at 1,000. makeQuery must return a FRESH
+// query builder each call (PostgREST builders are single-use).
+async function fetchAllRows(makeQuery, pageSize = 1000) {
+  let from = 0;
+  const all = [];
+  for (;;) {
+    const { data, error } = await makeQuery().range(from, from + pageSize - 1);
+    if (error) { console.error(error); return null; }
+    if (data && data.length) all.push(...data);
+    if (!data || data.length < pageSize) break;
+    from += pageSize;
+  }
+  return all;
+}
+
 async function loadTerritories() {
-  const { data, error } = await sb.from('territories').select('*').order('street_name').order('block_low');
-  if (error) { console.error(error); return; }
-  state.territories = data;
+  const all = await fetchAllRows(() =>
+    sb.from('territories').select('*').order('street_name').order('block_low').order('id'));
+  if (all) state.territories = all;
 }
 
 async function loadStatusForDate(dateStr) {
   // Load each territory's most recent status AS OF the selected date (not just an
   // exact-date match), so a block marked done stays done on later days until it's
   // explicitly changed. Past dates still show exactly what was true then.
-  const { data, error } = await sb.rpc('territory_status_asof', { as_of: dateStr });
-  if (error) { console.error(error); return; }
+  const rows = await fetchAllRows(() =>
+    sb.rpc('territory_status_asof', { as_of: dateStr }).order('territory_id'));
+  if (!rows) return;
   state.statusByTerritory = {};
-  for (const row of data) state.statusByTerritory[row.territory_id] = row;
+  for (const row of rows) state.statusByTerritory[row.territory_id] = row;
 }
 
 function statusFor(territoryId) {
