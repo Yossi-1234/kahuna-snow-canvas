@@ -431,7 +431,10 @@ async function loadTerritories() {
 }
 
 async function loadStatusForDate(dateStr) {
-  const { data, error } = await sb.from('territory_status').select('*, profiles:updated_by(full_name)').eq('work_date', dateStr);
+  // Load each territory's most recent status AS OF the selected date (not just an
+  // exact-date match), so a block marked done stays done on later days until it's
+  // explicitly changed. Past dates still show exactly what was true then.
+  const { data, error } = await sb.rpc('territory_status_asof', { as_of: dateStr });
   if (error) { console.error(error); return; }
   state.statusByTerritory = {};
   for (const row of data) state.statusByTerritory[row.territory_id] = row;
@@ -564,10 +567,15 @@ async function openPanel(territoryId) {
   document.getElementById('p-name').textContent = t.name;
   document.getElementById('p-meta').textContent = `${t.home_count} homes · avg built ${t.avg_year_built ?? '—'} · oldest ${t.oldest_year_built ?? '—'}${t.priority_rank ? ' · priority #' + t.priority_rank + ' of ' + state.territories.length : ''}`;
   const s = statusFor(territoryId);
+  const statusRow = state.statusByTerritory[territoryId];
+  // A carried-forward (inherited) status has an earlier work_date than the day
+  // being viewed. "Cancel" only removes an override set on the viewed date, so
+  // hide it for inherited statuses (to undo those, open the date they were set).
+  const isTodaysOverride = !!statusRow && statusRow.work_date === state.workDate;
   const badge = document.getElementById('p-badge');
   badge.textContent = STATUS_LABEL[s];
   badge.className = 'badge ' + s;
-  document.getElementById('act-reset').hidden = (s === 'not_started');
+  document.getElementById('act-reset').hidden = (s === 'not_started') || !isTodaysOverride;
   document.getElementById('actions-row').hidden = false;
   document.getElementById('reset-confirm').hidden = true;
   renderAssignmentSection(territoryId);
@@ -575,7 +583,7 @@ async function openPanel(territoryId) {
   const row = state.statusByTerritory[territoryId];
   document.getElementById('p-notes').value = row?.notes || '';
   document.getElementById('p-history').textContent = row
-    ? `${STATUS_LABEL[row.status]} by ${row.profiles?.full_name || 'someone'} · ${new Date(row.updated_at).toLocaleString()}`
+    ? `${STATUS_LABEL[row.status]} by ${row.updated_by_name || 'someone'} · ${new Date(row.updated_at).toLocaleString()}`
     : 'No activity yet for this date.';
 
   document.getElementById('addr-title').textContent = `Homes in this block (${t.home_count})`;
@@ -777,7 +785,9 @@ function subscribeRealtime() {
   state.channel = sb.channel('territory_status_live')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'territory_status' }, async (payload) => {
       const row = payload.new?.work_date ? payload.new : payload.old;
-      if (row?.work_date !== state.workDate) return;
+      // A change dated on/before the viewed date can affect the as-of view; only
+      // skip changes dated after it.
+      if (!row?.work_date || row.work_date > state.workDate) return;
       await loadStatusForDate(state.workDate);
       renderAll();
       if (state.selectedTerritoryId) openPanel(state.selectedTerritoryId);
