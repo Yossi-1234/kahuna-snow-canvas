@@ -143,11 +143,11 @@
 
   @media (max-width:640px){
     header .who{display:none;}
-    /* Address/search bar spans the top, full width */
-    #search-box{top:10px;left:10px;right:10px;width:auto;}
-    /* Tracker sits BELOW the search bar so they never overlap; scrolls sideways if tight */
-    #stats-bar{top:56px;left:10px;right:10px;max-width:none;font-size:11px;padding:6px 10px;gap:10px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;}
-    /* List toggle drops below the tracker */
+    /* Address/search bar spans the top, starting right of the +/- zoom control */
+    #search-box{top:10px;left:56px;right:10px;width:auto;}
+    /* Tracker sits below the search bar, also clear of the zoom control */
+    #stats-bar{top:56px;left:56px;right:10px;max-width:none;font-size:11px;padding:6px 10px;gap:10px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+    /* List toggle drops into the free space below the zoom control */
     #toggle-list-btn{top:104px;left:10px;}
     #panel{width:100%;max-width:100%;}
   }
