@@ -154,6 +154,23 @@
 
   .kahuna-cluster-icon{background:transparent!important;border:none!important;}
 
+  /* Locate-me button */
+  #locate-btn{position:absolute;right:10px;bottom:28px;z-index:900;width:42px;height:42px;
+    display:flex;align-items:center;justify-content:center;background:#fff;border:none;border-radius:50%;
+    box-shadow:0 2px 8px rgba(20,30,40,.28);cursor:pointer;color:#5f6b76;padding:0;}
+  #locate-btn svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;}
+  #locate-btn.following{color:#1a73e8;}
+  #locate-btn.locating svg{animation:locspin 1s linear infinite;}
+  @keyframes locspin{to{transform:rotate(360deg);}}
+
+  /* Live location blue dot */
+  .user-dot{position:relative;}
+  .user-dot .core{position:absolute;top:0;left:0;width:16px;height:16px;border-radius:50%;
+    background:#1a73e8;border:2px solid #fff;box-shadow:0 0 4px rgba(0,0,0,.4);box-sizing:border-box;}
+  .user-dot .pulse{position:absolute;top:0;left:0;width:16px;height:16px;border-radius:50%;
+    background:rgba(26,115,232,.35);animation:userpulse 2s ease-out infinite;}
+  @keyframes userpulse{0%{transform:scale(1);opacity:.7}100%{transform:scale(3.2);opacity:0}}
+
   /* Add to Home Screen banner */
   #a2hs{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:1200;
     display:none;align-items:center;gap:10px;background:var(--ink);color:#fff;
@@ -216,6 +233,15 @@
   </header>
   <div id="main">
     <div id="map"></div>
+    <button id="locate-btn" title="Show my location" aria-label="Show my location">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+        <circle cx="12" cy="12" r="4"></circle>
+        <line x1="12" y1="1" x2="12" y2="5"></line>
+        <line x1="12" y1="19" x2="12" y2="23"></line>
+        <line x1="1" y1="12" x2="5" y2="12"></line>
+        <line x1="19" y1="12" x2="23" y2="12"></line>
+      </svg>
+    </button>
     <button class="icon-btn" id="toggle-list-btn" style="background:#fff;">☰ Territories</button>
     <div id="stats-bar">
       <div class="stat done"><b id="stat-done">0</b>Done</div>
@@ -423,6 +449,70 @@ function initMap() {
     iconCreateFunction: clusterIcon
   });
   map.addLayer(clusterGroup);
+  initLocate();
+}
+
+/* ---- Live technician location (blue dot) ---- */
+let locWatchId = null, locMarker = null, locCircle = null,
+    locFollowing = false, locFirstFix = true, locAlerted = false;
+
+function initLocate() {
+  const btn = document.getElementById('locate-btn');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    if (!('geolocation' in navigator)) { alert('This device or browser does not support location.'); return; }
+    if (locWatchId === null) {
+      startLocating(btn);
+    } else {
+      locFollowing = true;
+      btn.classList.add('following');
+      if (locMarker) map.setView(locMarker.getLatLng(), Math.max(map.getZoom(), 17), { animate: true });
+    }
+  });
+  // Manual pan means "I'm looking elsewhere" — keep the dot live but stop auto-centering.
+  map.on('dragstart', () => { if (locFollowing) { locFollowing = false; btn.classList.remove('following'); } });
+}
+
+function startLocating(btn) {
+  btn.classList.add('locating');
+  locFollowing = true; locFirstFix = true; locAlerted = false;
+  locWatchId = navigator.geolocation.watchPosition(
+    (pos) => onLocation(pos, btn),
+    (err) => onLocationError(err, btn),
+    { enableHighAccuracy: true, maximumAge: 2000, timeout: 15000 }
+  );
+}
+
+function onLocation(pos, btn) {
+  btn.classList.remove('locating');
+  btn.classList.add('following');
+  const lat = pos.coords.latitude, lng = pos.coords.longitude, acc = pos.coords.accuracy;
+  const ll = [lat, lng];
+  if (!locMarker) {
+    const icon = L.divIcon({ className: 'user-dot', html: '<div class="pulse"></div><div class="core"></div>', iconSize: [16,16], iconAnchor: [8,8] });
+    locMarker = L.marker(ll, { icon, interactive: false, keyboard: false, zIndexOffset: 1000 }).addTo(map);
+    locCircle = L.circle(ll, { radius: acc, color: '#1a73e8', weight: 1, opacity: .3, fillColor: '#1a73e8', fillOpacity: .12, interactive: false }).addTo(map);
+  } else {
+    locMarker.setLatLng(ll);
+    locCircle.setLatLng(ll).setRadius(acc);
+  }
+  if (locFollowing) {
+    if (locFirstFix) { map.setView(ll, Math.max(map.getZoom(), 17), { animate: true }); locFirstFix = false; }
+    else { map.panTo(ll, { animate: true }); }
+  }
+}
+
+function onLocationError(err, btn) {
+  btn.classList.remove('locating');
+  if (err && err.code === 1) { // permission denied
+    btn.classList.remove('following');
+    locFollowing = false;
+    if (locWatchId !== null) { navigator.geolocation.clearWatch(locWatchId); locWatchId = null; }
+    alert('Location is blocked for this site. Turn on location access for this app/site in your browser or phone settings, then tap the locate button again.');
+  } else if (locFirstFix && !locAlerted) { // transient: keep watching, notify once
+    locAlerted = true;
+    alert('Still finding your location — make sure GPS/location is turned on. The blue dot will appear once it locks on.');
+  }
 }
 
 function clusterIcon(cluster) {
