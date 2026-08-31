@@ -565,7 +565,7 @@ async function fetchAllRows(makeQuery, pageSize = 1000) {
 async function loadTerritories() {
   const all = await fetchAllRows(() =>
     sb.from('territories').select('*').order('street_name').order('block_low').order('id'));
- if (all) state.territories = all; to if (all) state.territories = all.filter(t => !t.hidden);
+  if (all) state.territories = all.filter(t => !t.hidden);
 }
 
 async function loadStatusForDate(dateStr) {
