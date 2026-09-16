@@ -180,6 +180,22 @@
   #a2hs button{border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;padding:8px 12px;}
   #a2hs #a2hs-add{background:var(--blue);color:#fff;}
   #a2hs #a2hs-close{background:transparent;color:#c7d0da;padding:8px 6px;font-size:16px;}
+  /* Team Stats (admin) modal */
+  #stats-modal{position:fixed;inset:0;background:rgba(20,30,40,.45);z-index:1300;display:flex;align-items:center;justify-content:center;padding:20px;}
+  #stats-modal[hidden]{display:none;}
+  #stats-modal .stats-card{background:var(--card);border-radius:var(--radius);box-shadow:0 8px 32px rgba(20,30,40,.24);max-width:640px;width:100%;max-height:86vh;overflow:auto;}
+  #stats-modal .stats-head{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--card);}
+  #stats-modal .stats-head h2{font-size:16.5px;margin:0;}
+  #stats-modal .stats-head .close{background:none;border:none;font-size:20px;color:var(--muted);cursor:pointer;line-height:1;}
+  #stats-modal .stats-body{padding:16px 20px 20px;}
+  #stats-modal .stats-daypick{display:flex;align-items:center;gap:8px;font-size:13.5px;margin-bottom:14px;}
+  #stats-modal .stats-daypick input{padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-size:13.5px;}
+  #stats-modal table.stats-table{width:100%;border-collapse:collapse;font-size:13.5px;margin-bottom:4px;}
+  #stats-modal table.stats-table th{text-align:left;color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.03em;padding:6px 8px;border-bottom:1px solid var(--line);}
+  #stats-modal table.stats-table td{padding:8px;border-bottom:1px solid #f0f2f4;}
+  #stats-modal table.stats-table td.num{text-align:right;font-variant-numeric:tabular-nums;}
+  #stats-modal table.stats-table td.homes{font-weight:700;color:var(--ink);}
+  #stats-modal .empty-row td{color:var(--muted);text-align:center;padding:14px;}
 </style>
 </head>
 <body>
@@ -224,6 +240,7 @@
       <button id="vt-progress" class="active">Today's Progress</button>
       <button id="vt-priority">Oldest Homes</button>
     </div>
+    <button class="icon-btn" id="team-stats-btn" hidden>📊 Team Stats</button>
     <div class="datepick">
       Date: <input type="date" id="work-date">
     </div>
@@ -313,6 +330,32 @@
         <div class="section-title" id="addr-title">Homes in this block (8)</div>
         <ul class="addr-list" id="p-addrs"></ul>
       </div>
+    </div>
+  </div>
+</div>
+
+<div id="stats-modal" hidden>
+  <div class="stats-card">
+    <div class="stats-head">
+      <div>
+        <h2>Team Stats — Homes Visited</h2>
+      </div>
+      <button class="close" id="stats-close" aria-label="Close">✕</button>
+    </div>
+    <div class="stats-body">
+      <div class="stats-daypick">Day: <input type="date" id="stats-date"></div>
+
+      <div class="section-title">That day</div>
+      <table class="stats-table">
+        <thead><tr><th>Employee</th><th class="num">Territories</th><th class="num">Homes</th></tr></thead>
+        <tbody id="stats-day-body"><tr class="empty-row"><td colspan="3">Loading…</td></tr></tbody>
+      </table>
+
+      <div class="section-title">All-time total</div>
+      <table class="stats-table">
+        <thead><tr><th>Employee</th><th class="num">Territories</th><th class="num">Homes</th></tr></thead>
+        <tbody id="stats-total-body"><tr class="empty-row"><td colspan="3">Loading…</td></tr></tbody>
+      </table>
     </div>
   </div>
 </div>
@@ -424,6 +467,7 @@ async function boot(session) {
   state.profile = profile;
   state.userId = session.user.id;
   document.getElementById('who-box').innerHTML = `<b>${(profile?.full_name || session.user.email)}</b><br>${profile?.role === 'admin' ? 'Admin' : 'Estimator'}`;
+  document.getElementById('team-stats-btn').hidden = profile?.role !== 'admin';
 
   document.getElementById('work-date').value = state.workDate;
   document.getElementById('work-date').max = todayStr();
@@ -596,6 +640,38 @@ async function loadEstimators() {
   const { data, error } = await sb.from('profiles').select('id, full_name, role').order('full_name');
   if (error) { console.error(error); return; }
   state.estimators = data || [];
+}
+
+// ---------- TEAM STATS (admin) ----------
+function renderStatsRows(tbodyId, rows, emptyMsg) {
+  const tbody = document.getElementById(tbodyId);
+  if (!rows || !rows.length) { tbody.innerHTML = `<tr class="empty-row"><td colspan="3">${emptyMsg}</td></tr>`; return; }
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td>${r.full_name || 'Unknown'}</td>
+      <td class="num">${r.territories_completed}</td>
+      <td class="num homes">${r.homes}</td>
+    </tr>`).join('');
+}
+
+async function loadStatsDay(dateStr) {
+  const { data, error } = await sb.from('employee_homes_daily').select('*').eq('work_date', dateStr).order('homes', { ascending: false });
+  if (error) { console.error(error); renderStatsRows('stats-day-body', [], 'Error loading — see console'); return; }
+  renderStatsRows('stats-day-body', data, `No completions logged on ${dateStr}`);
+}
+
+async function loadStatsTotal() {
+  const { data, error } = await sb.from('employee_homes_total').select('*').order('homes', { ascending: false });
+  if (error) { console.error(error); renderStatsRows('stats-total-body', [], 'Error loading — see console'); return; }
+  renderStatsRows('stats-total-body', data, 'No completions logged yet');
+}
+
+function openStatsModal() {
+  const dateInput = document.getElementById('stats-date');
+  if (!dateInput.value) dateInput.value = state.workDate || todayStr();
+  document.getElementById('stats-modal').hidden = false;
+  loadStatsDay(dateInput.value);
+  loadStatsTotal();
 }
 
 function assignmentFor(territoryId) {
@@ -962,6 +1038,10 @@ function wireUI() {
 
   document.getElementById('toggle-list-btn').onclick = () => document.getElementById('list-drawer').classList.add('open');
   document.getElementById('close-list').onclick = () => document.getElementById('list-drawer').classList.remove('open');
+
+  document.getElementById('team-stats-btn').onclick = openStatsModal;
+  document.getElementById('stats-close').onclick = () => document.getElementById('stats-modal').hidden = true;
+  document.getElementById('stats-date').onchange = (e) => loadStatsDay(e.target.value);
 
   document.querySelectorAll('#list-filters button').forEach(btn => {
     btn.onclick = () => {
