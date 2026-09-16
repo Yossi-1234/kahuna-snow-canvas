@@ -204,6 +204,16 @@
   #stats-modal .invite-msg.ok{color:var(--green);}
   #stats-modal .invite-msg.err{color:var(--red);}
 
+  #recovery-modal{position:fixed;inset:0;background:rgba(20,30,40,.55);z-index:1400;display:flex;align-items:center;justify-content:center;padding:20px;}
+  #recovery-modal[hidden]{display:none;}
+
+  #my-stats-modal{position:fixed;inset:0;background:rgba(20,30,40,.45);z-index:1300;display:flex;align-items:center;justify-content:center;padding:20px;}
+  #my-stats-modal[hidden]{display:none;}
+  #my-stats-modal .stats-card{background:var(--card);border-radius:var(--radius);box-shadow:0 8px 32px rgba(20,30,40,.24);max-width:520px;width:100%;max-height:86vh;overflow:auto;}
+  #my-stats-modal .stats-head{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--card);}
+  #my-stats-modal .stats-head h2{font-size:16.5px;margin:0;}
+  #my-stats-modal .stats-head .close{background:none;border:none;font-size:20px;color:var(--muted);cursor:pointer;line-height:1;}
+  #my-stats-modal .stats-body{padding:16px 20px 20px;}
 </style>
 </head>
 <body>
@@ -242,7 +252,7 @@
   </div>
 </div>
 
-<div id="recovery-modal" hidden style="position:fixed;inset:0;background:rgba(20,30,40,.55);z-index:1400;display:flex;align-items:center;justify-content:center;padding:20px;">
+<div id="recovery-modal" hidden>
   <div class="auth-card" style="max-width:360px;">
     <h1>Set a new password</h1>
     <p class="sub">You followed a password reset link — choose a new password below.</p>
@@ -531,7 +541,13 @@ document.getElementById('recovery-form').addEventListener('submit', async (e) =>
   recErr.style.display = 'none';
   const password = document.getElementById('rec-pass').value;
   const { error } = await sb.auth.updateUser({ password });
-  if (error) { recErr.textContent = error.message; recErr.style.display = 'block'; return; }
+  if (error) {
+    recErr.textContent = /different from the old password/i.test(error.message)
+      ? "That's your current password — please choose a different one."
+      : error.message;
+    recErr.style.display = 'block';
+    return;
+  }
   document.getElementById('recovery-modal').hidden = true;
   alert('Password updated. You are now signed in.');
 });
