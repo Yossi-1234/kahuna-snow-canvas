@@ -196,6 +196,14 @@
   #stats-modal table.stats-table td.num{text-align:right;font-variant-numeric:tabular-nums;}
   #stats-modal table.stats-table td.homes{font-weight:700;color:var(--ink);}
   #stats-modal .empty-row td{color:var(--muted);text-align:center;padding:14px;}
+  #stats-modal .invite-box{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:18px;background:#f9fbfc;}
+  #stats-modal .invite-box .row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+  #stats-modal .invite-box input{flex:1;min-width:140px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;}
+  #stats-modal .invite-box button{padding:7px 14px;font-size:12.5px;white-space:nowrap;}
+  #stats-modal .invite-msg{font-size:12.5px;margin-top:8px;}
+  #stats-modal .invite-msg.ok{color:var(--green);}
+  #stats-modal .invite-msg.err{color:var(--red);}
+
 </style>
 </head>
 <body>
@@ -221,9 +229,29 @@
     </form>
 
     <div class="auth-toggle">
-      <span id="to-signup">New estimator? <button type="button" class="btn-link" id="show-signup">Create an account</button></span>
+      <span id="to-signup">New technician? <button type="button" class="btn-link" id="show-signup">Create an account</button></span>
       <span id="to-signin" style="display:none;">Already have an account? <button type="button" class="btn-link" id="show-signin">Log in</button></span>
     </div>
+
+    <button type="button" class="btn-link" id="show-forgot" style="margin-top:10px;display:block;">Forgot password or can't log in?</button>
+    <form id="forgot-form" style="display:none;margin-top:12px;">
+      <div class="field"><label>Email</label><input type="email" id="fp-email" required></div>
+      <button class="btn btn-primary" type="submit">Send reset link</button>
+      <button type="button" class="btn-link" id="cancel-forgot" style="display:block;margin-top:8px;">Cancel</button>
+    </form>
+  </div>
+</div>
+
+<div id="recovery-modal" hidden style="position:fixed;inset:0;background:rgba(20,30,40,.55);z-index:1400;display:flex;align-items:center;justify-content:center;padding:20px;">
+  <div class="auth-card" style="max-width:360px;">
+    <h1>Set a new password</h1>
+    <p class="sub">You followed a password reset link — choose a new password below.</p>
+    <div class="err" id="recovery-err"></div>
+    <form id="recovery-form">
+      <div class="field"><label>New password</label><input type="password" id="rec-pass" minlength="6" required autocomplete="new-password"></div>
+      <button class="btn btn-primary" type="submit">Save new password</button>
+      <button type="button" class="btn-link" id="recovery-cancel" style="display:block;margin-top:8px;">Cancel</button>
+    </form>
   </div>
 </div>
 
@@ -241,6 +269,7 @@
       <button id="vt-priority">Oldest Homes</button>
     </div>
     <button class="icon-btn" id="team-stats-btn" hidden>📊 Team Stats</button>
+    <button class="icon-btn" id="my-stats-btn">✅ My Stats</button>
     <div class="datepick">
       Date: <input type="date" id="work-date">
     </div>
@@ -302,7 +331,7 @@
         <div class="section-title">Route assignment</div>
         <div class="assign-status" id="assign-status">Not assigned yet.</div>
         <div class="assign-admin" id="assign-admin" hidden>
-          <select id="assign-select"><option value="">— Select estimator —</option></select>
+          <select id="assign-select"><option value="">— Select technician —</option></select>
           <button class="btn btn-primary assign-btn" id="assign-btn">Assign</button>
         </div>
         <button class="assign-link" id="unassign-btn" hidden>Unassign this block</button>
@@ -343,6 +372,15 @@
       <button class="close" id="stats-close" aria-label="Close">✕</button>
     </div>
     <div class="stats-body">
+      <div class="invite-box">
+        <div class="section-title" style="margin-top:0;">Invite a technician</div>
+        <div class="row">
+          <input type="text" id="invite-name" placeholder="Name">
+          <input type="email" id="invite-email" placeholder="Email address">
+          <button class="btn btn-primary" id="invite-send-btn">Send invite</button>
+        </div>
+        <div class="invite-msg" id="invite-msg"></div>
+      </div>
       <div class="stats-daypick">Day: <input type="date" id="stats-date"></div>
 
       <div class="section-title">That day</div>
@@ -356,6 +394,30 @@
         <thead><tr><th>Employee</th><th class="num">Territories</th><th class="num">Homes</th></tr></thead>
         <tbody id="stats-total-body"><tr class="empty-row"><td colspan="3">Loading…</td></tr></tbody>
       </table>
+    </div>
+  </div>
+</div>
+
+<div id="my-stats-modal" hidden>
+  <div class="stats-card">
+    <div class="stats-head">
+      <div>
+        <h2>My Stats</h2>
+      </div>
+      <button class="close" id="my-stats-close" aria-label="Close">✕</button>
+    </div>
+    <div class="stats-body">
+      <div class="stats-daypick">Day: <input type="date" id="my-stats-date"></div>
+
+      <div class="section-title">That day</div>
+      <table class="stats-table">
+        <thead><tr><th colspan="2">Areas completed</th></tr></thead>
+        <tbody id="my-stats-day-areas"><tr class="empty-row"><td colspan="2">Loading…</td></tr></tbody>
+      </table>
+      <div class="stats-daypick" style="margin-top:10px;">Homes that day: <b id="my-stats-day-homes">0</b></div>
+
+      <div class="section-title">All-time total</div>
+      <div class="stats-daypick">Homes total: <b id="my-stats-total-homes">0</b> across <b id="my-stats-total-territories">0</b> territories</div>
     </div>
   </div>
 </div>
@@ -405,7 +467,7 @@ document.getElementById('show-signup').onclick = () => {
   document.getElementById('signup-form').style.display='block';
   document.getElementById('to-signup').style.display='none';
   document.getElementById('to-signin').style.display='inline';
-  document.getElementById('auth-sub').textContent = 'Create your estimator account';
+  document.getElementById('auth-sub').textContent = 'Create your technician account';
   clearAuthMsgs();
 };
 document.getElementById('show-signin').onclick = () => {
@@ -441,7 +503,54 @@ document.getElementById('signup-form').addEventListener('submit', async (e) => {
 
 document.getElementById('signout-btn').onclick = async () => { await sb.auth.signOut(); location.reload(); };
 
+document.getElementById('show-forgot').onclick = () => {
+  document.getElementById('signin-form').style.display = 'none';
+  document.getElementById('forgot-form').style.display = 'block';
+  document.getElementById('show-forgot').style.display = 'none';
+  clearAuthMsgs();
+};
+document.getElementById('cancel-forgot').onclick = () => {
+  document.getElementById('forgot-form').style.display = 'none';
+  document.getElementById('signin-form').style.display = 'block';
+  document.getElementById('show-forgot').style.display = 'block';
+  clearAuthMsgs();
+};
+document.getElementById('forgot-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  clearAuthMsgs();
+  const email = document.getElementById('fp-email').value.trim();
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
+  if (error) { showAuthErr(error.message); return; }
+  showAuthOk("If that email has an account, a reset link is on its way. Check spam if it doesn't show up in a few minutes.");
+  document.getElementById('forgot-form').reset();
+});
+
+document.getElementById('recovery-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const recErr = document.getElementById('recovery-err');
+  recErr.style.display = 'none';
+  const password = document.getElementById('rec-pass').value;
+  const { error } = await sb.auth.updateUser({ password });
+  if (error) { recErr.textContent = error.message; recErr.style.display = 'block'; return; }
+  document.getElementById('recovery-modal').hidden = true;
+  alert('Password updated. You are now signed in.');
+});
+
+document.getElementById('recovery-cancel').onclick = () => {
+  document.getElementById('recovery-modal').hidden = true;
+  document.getElementById('recovery-err').style.display = 'none';
+  document.getElementById('rec-pass').value = '';
+};
+
 sb.auth.onAuthStateChange(async (event, session) => {
+  if (event === 'PASSWORD_RECOVERY') {
+    document.getElementById('recovery-modal').hidden = false;
+    // Strip the recovery token out of the URL so refreshing this tab later
+    // doesn't re-open this modal on its own.
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState(null, '', location.pathname + location.search);
+    }
+  }
   if (session) {
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
@@ -466,7 +575,7 @@ async function boot(session) {
   const { data: profile } = await sb.from('profiles').select('*').eq('id', session.user.id).single();
   state.profile = profile;
   state.userId = session.user.id;
-  document.getElementById('who-box').innerHTML = `<b>${(profile?.full_name || session.user.email)}</b><br>${profile?.role === 'admin' ? 'Admin' : 'Estimator'}`;
+  document.getElementById('who-box').innerHTML = `<b>${(profile?.full_name || session.user.email)}</b><br>${profile?.role === 'admin' ? 'Admin' : 'Technician'}`;
   document.getElementById('team-stats-btn').hidden = profile?.role !== 'admin';
 
   document.getElementById('work-date').value = state.workDate;
@@ -493,7 +602,49 @@ function initMap() {
     iconCreateFunction: clusterIcon
   });
   map.addLayer(clusterGroup);
+  initHighways();
   initLocate();
+}
+
+// ---------- HIGHWAY REFERENCE LINES ----------
+// Approximate routes for visual orientation only (not survey-precise).
+// Built from known interchange locations across the west/southwest metro service area.
+function initHighways() {
+  const routes = [
+    { label: 'Hwy 100', color: '#8a5cf6', points: [
+      [44.8558,-93.3444],[44.8752,-93.3486],[44.9046,-93.3436],[44.9312,-93.3444],
+      [44.9483,-93.3462],[44.9719,-93.3466],[45.0089,-93.3466],[45.0492,-93.3466]
+    ]},
+    { label: 'Hwy 169', color: '#e0a12b', points: [
+      [44.8300,-93.4390],[44.8550,-93.4636],[44.8830,-93.4696],[44.9120,-93.4696],
+      [44.9400,-93.4696],[44.9800,-93.4696],[45.0300,-93.4696]
+    ]},
+    { label: 'Hwy 55', color: '#2e9e5b', points: [
+      [44.9825,-93.3240],[44.9825,-93.3480],[44.9900,-93.4000],
+      [45.0050,-93.4500],[45.0200,-93.5000],[45.0400,-93.5500]
+    ]},
+    { label: 'I-494', color: '#d6483f', points: [
+      [44.8580,-93.2400],[44.8580,-93.3000],[44.8580,-93.3500],[44.8580,-93.4000],
+      [44.8620,-93.4400],[44.9000,-93.4600],[44.9400,-93.4600],[44.9700,-93.4600],[45.0100,-93.4600]
+    ]},
+    { label: 'I-394', color: '#1d6fb8', points: [
+      [44.9725,-93.3000],[44.9725,-93.3480],[44.9680,-93.4000],[44.9650,-93.4400]
+    ]}
+  ];
+  window.highwayLayer = L.layerGroup();
+  routes.forEach(r => {
+    L.polyline(r.points, { color: r.color, weight: 4, opacity: 0.75, dashArray: '2,8' }).addTo(window.highwayLayer);
+    const mid = r.points[Math.floor(r.points.length / 2)];
+    L.marker(mid, {
+      icon: L.divIcon({
+        className: 'hwy-label',
+        html: `<span style="background:${r.color};color:#fff;font-size:11px;font-weight:700;padding:2px 6px;border-radius:4px;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.3);">${r.label}</span>`,
+        iconSize: [0,0]
+      }),
+      interactive: false
+    }).addTo(window.highwayLayer);
+  });
+  window.highwayLayer.addTo(map);
 }
 
 /* ---- Live technician location (blue dot) ---- */
@@ -674,6 +825,86 @@ function openStatsModal() {
   loadStatsTotal();
 }
 
+// ---------- INVITE A TECHNICIAN (admin) ----------
+async function sendInvite() {
+  const nameEl = document.getElementById('invite-name');
+  const emailEl = document.getElementById('invite-email');
+  const msgEl = document.getElementById('invite-msg');
+  const email = emailEl.value.trim();
+  const full_name = nameEl.value.trim();
+  msgEl.className = 'invite-msg';
+  msgEl.textContent = '';
+  if (!email || !email.includes('@')) {
+    msgEl.className = 'invite-msg err';
+    msgEl.textContent = 'Enter a valid email address.';
+    return;
+  }
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/invite-technician`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'apikey': SUPABASE_ANON_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email, full_name })
+    });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok || out.error) {
+      msgEl.className = 'invite-msg err';
+      msgEl.textContent = out.error || 'Could not send invite.';
+      return;
+    }
+    msgEl.className = 'invite-msg ok';
+    msgEl.textContent = `Invite sent to ${email}.`;
+    nameEl.value = '';
+    emailEl.value = '';
+    await loadEstimators();
+  } catch (e) {
+    msgEl.className = 'invite-msg err';
+    msgEl.textContent = 'Network error sending invite.';
+  }
+}
+
+// ---------- MY STATS (everyone) ----------
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+async function loadMyStatsDay(dateStr) {
+  const tbody = document.getElementById('my-stats-day-areas');
+  const { data, error } = await sb.from('employee_completions').select('*').eq('work_date', dateStr).eq('updated_by', state.userId).order('street_name');
+  if (error) { console.error(error); tbody.innerHTML = '<tr class="empty-row"><td colspan="2">Error loading</td></tr>'; return; }
+  if (!data || !data.length) {
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="2">No completions on ${dateStr}</td></tr>`;
+    document.getElementById('my-stats-day-homes').textContent = '0';
+    return;
+  }
+  tbody.innerHTML = data.map(r => `<tr><td>${escapeHtml(r.street_name || r.territory_name)}${r.city ? ', ' + escapeHtml(r.city) : ''}</td><td class="num">${r.home_count}</td></tr>`).join('');
+  document.getElementById('my-stats-day-homes').textContent = data.reduce((s, r) => s + (r.home_count || 0), 0);
+}
+
+async function loadMyStatsTotal() {
+  const { data, error } = await sb.from('employee_homes_total').select('*').eq('updated_by', state.userId).maybeSingle();
+  if (error || !data) {
+    document.getElementById('my-stats-total-homes').textContent = '0';
+    document.getElementById('my-stats-total-territories').textContent = '0';
+    return;
+  }
+  document.getElementById('my-stats-total-homes').textContent = data.homes;
+  document.getElementById('my-stats-total-territories').textContent = data.territories_completed;
+}
+
+function openMyStatsModal() {
+  const dateInput = document.getElementById('my-stats-date');
+  if (!dateInput.value) dateInput.value = state.workDate || todayStr();
+  document.getElementById('my-stats-modal').hidden = false;
+  loadMyStatsDay(dateInput.value);
+  loadMyStatsTotal();
+}
+
 function assignmentFor(territoryId) {
   return state.assignmentsByTerritory[territoryId] || null;
 }
@@ -841,7 +1072,7 @@ function renderAssignmentSection(territoryId) {
   unassignBtn.hidden = !(isAdmin && assignment);
   if (isAdmin) {
     const select = document.getElementById('assign-select');
-    select.innerHTML = '<option value="">— Select estimator —</option>' + state.estimators.map(e =>
+    select.innerHTML = '<option value="">— Select technician —</option>' + state.estimators.map(e =>
       `<option value="${e.id}"${assignment?.assigned_to === e.id ? ' selected' : ''}>${e.full_name || 'Unnamed'}${e.role === 'admin' ? ' (admin)' : ''}</option>`
     ).join('');
   }
@@ -854,7 +1085,7 @@ document.getElementById('assign-btn').onclick = async () => {
   const territoryId = state.selectedTerritoryId;
   if (!territoryId) return;
   const estimatorId = document.getElementById('assign-select').value;
-  if (!estimatorId) { alert('Choose an estimator first.'); return; }
+  if (!estimatorId) { alert('Choose a technician first.'); return; }
   const payload = { territory_id: territoryId, work_date: state.workDate, assigned_to: estimatorId, assigned_by: state.userId };
   const { error } = await sb.from('territory_assignments').upsert(payload, { onConflict: 'territory_id,work_date' });
   if (error) { alert('Could not assign this block: ' + error.message); return; }
@@ -1042,6 +1273,11 @@ function wireUI() {
   document.getElementById('team-stats-btn').onclick = openStatsModal;
   document.getElementById('stats-close').onclick = () => document.getElementById('stats-modal').hidden = true;
   document.getElementById('stats-date').onchange = (e) => loadStatsDay(e.target.value);
+  document.getElementById('invite-send-btn').onclick = sendInvite;
+
+  document.getElementById('my-stats-btn').onclick = openMyStatsModal;
+  document.getElementById('my-stats-close').onclick = () => document.getElementById('my-stats-modal').hidden = true;
+  document.getElementById('my-stats-date').onchange = (e) => loadMyStatsDay(e.target.value);
 
   document.querySelectorAll('#list-filters button').forEach(btn => {
     btn.onclick = () => {
