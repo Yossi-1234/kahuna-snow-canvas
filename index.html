@@ -666,8 +666,16 @@ async function boot(session) {
 
 function initMap() {
   map = L.map('map', { zoomControl: true }).setView([44.9856, -93.3492], 13);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19, attribution: '&copy; OpenStreetMap contributors'
+  // Satellite imagery (free, keyless Esri World Imagery -- true Google Maps satellite
+  // tiles require a paid Google Cloud API key and can't be embedded outside Google's
+  // own Maps API per their terms of service).
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 19, attribution: 'Imagery &copy; Esri, Maxar, Earthstar Geographics'
+  }).addTo(map);
+  // Road + highway label overlay on top of the imagery (transparent background),
+  // so real highway numbers show up without needing hand-drawn reference lines.
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 19, attribution: '&copy; Esri', pane: 'overlayPane'
   }).addTo(map);
   clusterGroup = L.markerClusterGroup({
     maxClusterRadius: 40,
@@ -675,50 +683,7 @@ function initMap() {
     iconCreateFunction: clusterIcon
   });
   map.addLayer(clusterGroup);
-  initHighways();
   initLocate();
-}
-
-// ---------- HIGHWAY REFERENCE LINES ----------
-// Approximate routes for visual orientation only (not survey-precise).
-// Built from known interchange locations across the west/southwest metro service area.
-function initHighways() {
-  const routes = [
-    { label: 'Hwy 100', color: '#8a5cf6', points: [
-      [44.8558,-93.3444],[44.8752,-93.3486],[44.9046,-93.3436],[44.9312,-93.3444],
-      [44.9483,-93.3462],[44.9719,-93.3466],[45.0089,-93.3466],[45.0492,-93.3466]
-    ]},
-    { label: 'Hwy 169', color: '#e0a12b', points: [
-      [44.8300,-93.4390],[44.8850,-93.4200],[44.9361,-93.4037],[44.9605,-93.4063],
-      [44.9849,-93.4089],[45.0172,-93.4045],[45.0300,-93.4100]
-    ]},
-    { label: 'Hwy 55', color: '#2e9e5b', points: [
-      [44.9825,-93.3240],[44.9825,-93.3480],[44.9900,-93.4000],
-      [45.0050,-93.4500],[45.0200,-93.5000],[45.0400,-93.5500]
-    ]},
-    { label: 'I-494', color: '#d6483f', points: [
-      [44.8580,-93.4400],[44.9000,-93.4660],[44.9349,-93.4680],[44.9666,-93.4672],
-      [44.9910,-93.4655],[45.0275,-93.4629],[45.0450,-93.4600]
-    ]},
-    { label: 'I-394', color: '#1d6fb8', points: [
-      [44.9700,-93.3000],[44.9715,-93.3345],[44.9721,-93.3462],[44.9745,-93.3719],
-      [44.9763,-93.3977],[44.9754,-93.4234],[44.9739,-93.4492],[44.9727,-93.4732]
-    ]}
-  ];
-  window.highwayLayer = L.layerGroup();
-  routes.forEach(r => {
-    L.polyline(r.points, { color: r.color, weight: 4, opacity: 0.75, dashArray: '2,8' }).addTo(window.highwayLayer);
-    const mid = r.points[Math.floor(r.points.length / 2)];
-    L.marker(mid, {
-      icon: L.divIcon({
-        className: 'hwy-label',
-        html: `<span style="background:${r.color};color:#fff;font-size:11px;font-weight:700;padding:2px 6px;border-radius:4px;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.3);">${r.label}</span>`,
-        iconSize: [0,0]
-      }),
-      interactive: false
-    }).addTo(window.highwayLayer);
-  });
-  window.highwayLayer.addTo(map);
 }
 
 /* ---- Live technician location (blue dot) ---- */
