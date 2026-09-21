@@ -217,6 +217,23 @@
   #stats-modal .directory-box{margin-bottom:20px;}
   #stats-modal table.stats-table td input[type="tel"]{width:100%;border:1px solid var(--line);border-radius:6px;padding:5px 7px;font-size:13px;font-family:inherit;}
   #stats-modal .directory-saved{font-size:11px;color:var(--green);margin-left:6px;}
+
+  #message-modal{position:fixed;inset:0;background:rgba(20,30,40,.45);z-index:1300;display:flex;align-items:center;justify-content:center;padding:20px;}
+  #message-modal[hidden]{display:none;}
+  #message-modal .stats-card{background:var(--card);border-radius:var(--radius);box-shadow:0 8px 32px rgba(20,30,40,.24);max-width:520px;width:100%;max-height:86vh;overflow:auto;}
+  #message-modal .stats-head{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--card);}
+  #message-modal .stats-head h2{font-size:16.5px;margin:0;}
+  #message-modal .stats-head .close{background:none;border:none;font-size:20px;color:var(--muted);cursor:pointer;line-height:1;}
+  #message-modal .stats-body{padding:16px 20px 20px;}
+  #message-modal .recipient-list{border:1px solid var(--line);border-radius:8px;padding:8px 10px;max-height:150px;overflow:auto;margin-bottom:14px;font-size:13.5px;}
+  #message-modal .recipient-list label{display:flex;align-items:center;gap:6px;padding:3px 0;}
+  #message-modal input[type="text"], #message-modal textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13.5px;font-family:inherit;margin-bottom:12px;box-sizing:border-box;}
+  #message-modal textarea{min-height:110px;resize:vertical;}
+  #message-modal .field-label{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:6px;}
+  #message-modal .msg-actions{display:flex;gap:8px;flex-wrap:wrap;}
+  #message-modal .send-status{font-size:12.5px;margin-top:10px;}
+  #message-modal .send-status.ok{color:var(--green);}
+  #message-modal .send-status.err{color:var(--red);}
 </style>
 </head>
 <body>
@@ -283,6 +300,7 @@
     </div>
     <button class="icon-btn" id="team-stats-btn" hidden>📊 Team Stats</button>
     <button class="icon-btn" id="my-stats-btn">✅ My Stats</button>
+    <button class="icon-btn" id="message-team-btn" hidden>✉️ Message Team</button>
     <div class="datepick">
       Date: <input type="date" id="work-date">
     </div>
@@ -441,6 +459,31 @@
 
       <div class="section-title">All-time total</div>
       <div class="stats-daypick">Homes total: <b id="my-stats-total-homes">0</b> across <b id="my-stats-total-territories">0</b> territories</div>
+    </div>
+  </div>
+</div>
+
+<div id="message-modal" hidden>
+  <div class="stats-card">
+    <div class="stats-head">
+      <h2>Message the team</h2>
+      <button class="close" id="message-close" aria-label="Close">✕</button>
+    </div>
+    <div class="stats-body">
+      <div class="field-label">Send to</div>
+      <div class="recipient-list" id="message-recipients"></div>
+
+      <div class="field-label">Subject</div>
+      <input type="text" id="message-subject" placeholder="Subject">
+
+      <div class="field-label">Message</div>
+      <textarea id="message-body" placeholder="Write your message…"></textarea>
+
+      <div class="msg-actions">
+        <button class="btn btn-primary" id="message-send-btn">Send email</button>
+        <button class="btn" id="message-test-btn">Send test to myself</button>
+      </div>
+      <div class="send-status" id="message-status"></div>
     </div>
   </div>
 </div>
@@ -606,6 +649,7 @@ async function boot(session) {
   state.userId = session.user.id;
   document.getElementById('who-box').innerHTML = `<b>${(profile?.full_name || session.user.email)}</b><br>${profile?.role === 'admin' ? 'Admin' : 'Technician'}`;
   document.getElementById('team-stats-btn').hidden = profile?.role !== 'admin';
+  document.getElementById('message-team-btn').hidden = profile?.role !== 'admin';
 
   document.getElementById('work-date').value = state.workDate;
   document.getElementById('work-date').max = todayStr();
@@ -622,8 +666,8 @@ async function boot(session) {
 
 function initMap() {
   map = L.map('map', { zoomControl: true }).setView([44.9856, -93.3492], 13);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-    maxZoom: 20, attribution: '&copy; OpenStreetMap &copy; CARTO'
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19, attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
   clusterGroup = L.markerClusterGroup({
     maxClusterRadius: 40,
@@ -645,19 +689,20 @@ function initHighways() {
       [44.9483,-93.3462],[44.9719,-93.3466],[45.0089,-93.3466],[45.0492,-93.3466]
     ]},
     { label: 'Hwy 169', color: '#e0a12b', points: [
-      [44.8300,-93.4390],[44.8550,-93.4636],[44.8830,-93.4696],[44.9120,-93.4696],
-      [44.9400,-93.4696],[44.9800,-93.4696],[45.0300,-93.4696]
+      [44.8300,-93.4390],[44.8850,-93.4200],[44.9361,-93.4037],[44.9605,-93.4063],
+      [44.9849,-93.4089],[45.0172,-93.4045],[45.0300,-93.4100]
     ]},
     { label: 'Hwy 55', color: '#2e9e5b', points: [
       [44.9825,-93.3240],[44.9825,-93.3480],[44.9900,-93.4000],
       [45.0050,-93.4500],[45.0200,-93.5000],[45.0400,-93.5500]
     ]},
     { label: 'I-494', color: '#d6483f', points: [
-      [44.8580,-93.2400],[44.8580,-93.3000],[44.8580,-93.3500],[44.8580,-93.4000],
-      [44.8620,-93.4400],[44.9000,-93.4600],[44.9400,-93.4600],[44.9700,-93.4600],[45.0100,-93.4600]
+      [44.8580,-93.4400],[44.9000,-93.4660],[44.9349,-93.4680],[44.9666,-93.4672],
+      [44.9910,-93.4655],[45.0275,-93.4629],[45.0450,-93.4600]
     ]},
     { label: 'I-394', color: '#1d6fb8', points: [
-      [44.9725,-93.3000],[44.9725,-93.3480],[44.9680,-93.4000],[44.9650,-93.4400]
+      [44.9700,-93.3000],[44.9715,-93.3345],[44.9721,-93.3462],[44.9745,-93.3719],
+      [44.9763,-93.3977],[44.9754,-93.4234],[44.9739,-93.4492],[44.9727,-93.4732]
     ]}
   ];
   window.highwayLayer = L.layerGroup();
@@ -963,6 +1008,80 @@ function openMyStatsModal() {
   document.getElementById('my-stats-modal').hidden = false;
   loadMyStatsDay(dateInput.value);
   loadMyStatsTotal();
+}
+
+// ---------- MESSAGE THE TEAM (admin, real email via Resend) ----------
+function renderMessageRecipients() {
+  const box = document.getElementById('message-recipients');
+  const techs = (state.estimators || []).filter(e => e.role !== 'admin').slice().sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
+  if (!techs.length) { box.innerHTML = '<div class="empty-row">No technicians yet</div>'; return; }
+  box.innerHTML = `<label><input type="checkbox" id="message-recipient-all" checked><b>Everyone</b></label>` +
+    techs.map(t => `<label><input type="checkbox" class="message-recipient" value="${t.id}" checked disabled> ${escapeHtml(t.full_name || t.email || 'Unknown')}</label>`).join('');
+  const allBox = document.getElementById('message-recipient-all');
+  const techBoxes = box.querySelectorAll('.message-recipient');
+  allBox.onchange = () => {
+    techBoxes.forEach(cb => { cb.disabled = allBox.checked; if (allBox.checked) cb.checked = true; });
+  };
+}
+
+function openMessageModal() {
+  document.getElementById('message-modal').hidden = false;
+  document.getElementById('message-status').textContent = '';
+  document.getElementById('message-status').className = 'send-status';
+  renderMessageRecipients();
+}
+
+async function sendTeamMessage(isTest) {
+  const statusEl = document.getElementById('message-status');
+  const subject = document.getElementById('message-subject').value.trim();
+  const text = document.getElementById('message-body').value.trim();
+  statusEl.className = 'send-status';
+  statusEl.textContent = '';
+  if (!subject || !text) {
+    statusEl.className = 'send-status err';
+    statusEl.textContent = 'Add a subject and a message first.';
+    return;
+  }
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return;
+
+  const payload = { subject, text, test: !!isTest };
+  if (!isTest) {
+    const allChecked = document.getElementById('message-recipient-all').checked;
+    if (!allChecked) {
+      payload.recipient_ids = Array.from(document.querySelectorAll('.message-recipient:checked')).map(cb => cb.value);
+    }
+  }
+
+  statusEl.textContent = isTest ? 'Sending test…' : 'Sending…';
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/send-team-message`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'apikey': SUPABASE_ANON_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok || out.error) {
+      statusEl.className = 'send-status err';
+      statusEl.textContent = out.error || 'Could not send.';
+      return;
+    }
+    statusEl.className = 'send-status ok';
+    statusEl.textContent = isTest
+      ? `Test sent to ${out.sent_to?.[0] || 'you'}. Check your inbox.`
+      : `Sent to ${(out.sent_to || []).length} recipient(s).`;
+    if (!isTest) {
+      document.getElementById('message-subject').value = '';
+      document.getElementById('message-body').value = '';
+    }
+  } catch (e) {
+    statusEl.className = 'send-status err';
+    statusEl.textContent = 'Network error sending message.';
+  }
 }
 
 function assignmentFor(territoryId) {
@@ -1337,6 +1456,11 @@ function wireUI() {
 
   document.getElementById('my-stats-btn').onclick = openMyStatsModal;
   document.getElementById('my-stats-close').onclick = () => document.getElementById('my-stats-modal').hidden = true;
+
+  document.getElementById('message-team-btn').onclick = openMessageModal;
+  document.getElementById('message-close').onclick = () => document.getElementById('message-modal').hidden = true;
+  document.getElementById('message-send-btn').onclick = () => sendTeamMessage(false);
+  document.getElementById('message-test-btn').onclick = () => sendTeamMessage(true);
   document.getElementById('my-stats-date').onchange = (e) => loadMyStatsDay(e.target.value);
 
   document.querySelectorAll('#list-filters button').forEach(btn => {
@@ -1358,6 +1482,12 @@ function setView(v) {
   document.getElementById('vt-progress').classList.toggle('active', v==='progress');
   document.getElementById('vt-priority').classList.toggle('active', v==='priority');
   renderAll();
+}
+
+/* ---- Register a minimal service worker so Chrome will treat this as a real     ---- */
+/* ---- installable app (required for beforeinstallprompt / a stable home icon).  ---- */
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 
 /* ---- Add to Home Screen (installable web app) ---- */
