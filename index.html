@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Kahuna Snow">
 <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAAFKUlEQVR4nO3d3XHbOBiGUWZn24jbcTlJKS4nbseNZC/ijD1eSpQogMSH95zb3czwBw8Aamjp2/cfv34vEOqfsw8AziQAogmAaAIgmgCIJgCiCYBoAiCaAIgmAKIJgGgCIJoAiCYAogmAaAIgmgCIJgCiCYBoAiCaAIgmAKIJgGgCIJoAiCYAogmAaAIgmgCIJgCiCYBoAiCaAIgmAKIJgGgCIJoAiCYAogmAaAIgmgCIJgCiCYBoAiCaAFa8vTyffQjNzXhOLXz7/uPX77MPYhRfB8nTz9eTjqStWc+rhX/PPoARpM2Of89XCLZAy7JcHggzhHHpHAz+P6wAG9YG0KiDZ4Zgj2YFeDfqoO4h6Vy3CIBoAiCaAN7dun8eeftw67F5VvggAKIJYMmcERPPeY2PQZePrUPKoBh5G3c0r0Ks2Aph1AFU9bjPZAu0YmugVFwpDP51VoAN9wz2owbZiMdUlRVggwE0NwFMTLzbBLDh7eW57ECq+KxyNAHcwECalwCumGHgz3AOPQmAaAK4YKaZc6Zzac2rEBfM8npE1Qf4owhgw+cBVCUGg/52tkB3ePr5enVwnR3I1vHxfwLY4cxB5lse2hLATmd8lcrZK8yMBPCAUb5PyOy/nwCKsPXpQwAPGmUVYB8BFGD270cADVgF6hJAZ49GYPbvSwCNGJA1CaCh1lshs39/AhiU54djCKCx3g/EZv+2BDAgW5/jCKADH4vWIYCDbUVg9j+WADoxYGsQQEf3boXM/sfzJ5En8TwwhogV4MzB9ujsfdbsnxJoyQD23JyKN7TS4K94fZelaADLcvsF//z/vb08l7pRRx/r1+uz5xpXUy6AFgO68g3rZe913BPMSMoFsObeT1W2/ltLvV6HbmnPdao42NeU+oWYWy76133znn/TUouB0uv4Kl7P1oYNYJYZhj9GjWKKLRDsJQCiCYBoAiDasA/Bl1x7OB7xE4uRPwValvafBI36sHvJFCvApa8F37oZ1W5WD3uu0Uxfw14ugK8Xfs+NOPIGVngZbu/1aHEvzlYugL9uvWkz3KSj7LlW1VeDkn8P0GK2Yt3e30aren3LrgD3qHpzzpRyzSICOFOFl+GSldwCVXHvx4UG+/GsACe4tL3wfULHE0AnvuGhBgEMxipwLAF00Gv2F0F7AhiQbdJxBNBYq9nfVugYAmjI4KxHAAfYu6WxCvQngEZ87FmTAAZnFehLAA2cNfuL4HECeNARg9A2qh8BdNJ60NoK9SGAB3jwrU8AhVgF2hPADte+lr3Sj1oggLuM8AMb1wIb4fiq8RdhG+4ZUKPs/T8f8yjHNCoBXDDLTPr3PISwzhbogpkGzEzn0poAiCaAK2aYOWc4h54EcIOKg6jiMZ9BABuefr6WfCB+e3kWwQ0EMLGK4R5NABsMormV+4WYo2wN/BG3FzP9cstRrAArKg7+LVaydQL4pPq7NFthVj+/HrwKsdR83+cRXo/4YAVYMgdC4jmvEQDRBPDu1hlx5D30rcdm9v8gAKIJgGgCeDfy1qa1pHPd4mPQDZX2y354735WgGXu7/fxVSrXWQGW/b+OXtUMYbfiZbgVM75LP+M5tSAAonkGIJoAiCYAogmAaAIgmgCIJgCiCYBoAiCaAIgmAKIJgGgCIJoAiCYAogmAaAIgmgCIJgCiCYBoAiCaAIgmAKIJgGgCIJoAiCYAogmAaAIgmgCIJgCiCYBoAiCaAIgmAKIJgGgCIJoAiCYAogmAaAIgmgCIJgCiCYBo/wG9ydUif0NBBwAAAABJRU5ErkJggg==">
-<link rel="manifest" href="manifest.json">
+<link id="app-manifest" rel="manifest">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
@@ -171,6 +171,12 @@
     background:rgba(26,115,232,.35);animation:userpulse 2s ease-out infinite;}
   @keyframes userpulse{0%{transform:scale(1);opacity:.7}100%{transform:scale(3.2);opacity:0}}
 
+  /* Kahuna office marker */
+  .office-marker{background:#7b3fa0;width:30px;height:30px;border-radius:50% 50% 50% 0;
+    transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;
+    box-shadow:0 2px 6px rgba(20,30,40,.4);border:2px solid #fff;box-sizing:border-box;}
+  .office-marker span{transform:rotate(45deg);font-size:15px;line-height:1;}
+
   /* Add to Home Screen banner */
   #a2hs{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:1200;
     display:none;align-items:center;gap:10px;background:var(--ink);color:#fff;
@@ -180,60 +186,6 @@
   #a2hs button{border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;padding:8px 12px;}
   #a2hs #a2hs-add{background:var(--blue);color:#fff;}
   #a2hs #a2hs-close{background:transparent;color:#c7d0da;padding:8px 6px;font-size:16px;}
-  /* Team Stats (admin) modal */
-  #stats-modal{position:fixed;inset:0;background:rgba(20,30,40,.45);z-index:1300;display:flex;align-items:center;justify-content:center;padding:20px;}
-  #stats-modal[hidden]{display:none;}
-  #stats-modal .stats-card{background:var(--card);border-radius:var(--radius);box-shadow:0 8px 32px rgba(20,30,40,.24);max-width:640px;width:100%;max-height:86vh;overflow:auto;}
-  #stats-modal .stats-head{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--card);}
-  #stats-modal .stats-head h2{font-size:16.5px;margin:0;}
-  #stats-modal .stats-head .close{background:none;border:none;font-size:20px;color:var(--muted);cursor:pointer;line-height:1;}
-  #stats-modal .stats-body{padding:16px 20px 20px;}
-  #stats-modal .stats-daypick{display:flex;align-items:center;gap:8px;font-size:13.5px;margin-bottom:14px;}
-  #stats-modal .stats-daypick input{padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-size:13.5px;}
-  #stats-modal table.stats-table{width:100%;border-collapse:collapse;font-size:13.5px;margin-bottom:4px;}
-  #stats-modal table.stats-table th{text-align:left;color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.03em;padding:6px 8px;border-bottom:1px solid var(--line);}
-  #stats-modal table.stats-table td{padding:8px;border-bottom:1px solid #f0f2f4;}
-  #stats-modal table.stats-table td.num{text-align:right;font-variant-numeric:tabular-nums;}
-  #stats-modal table.stats-table td.homes{font-weight:700;color:var(--ink);}
-  #stats-modal .empty-row td{color:var(--muted);text-align:center;padding:14px;}
-  #stats-modal .invite-box{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:18px;background:#f9fbfc;}
-  #stats-modal .invite-box .row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
-  #stats-modal .invite-box input{flex:1;min-width:140px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;}
-  #stats-modal .invite-box button{padding:7px 14px;font-size:12.5px;white-space:nowrap;}
-  #stats-modal .invite-msg{font-size:12.5px;margin-top:8px;}
-  #stats-modal .invite-msg.ok{color:var(--green);}
-  #stats-modal .invite-msg.err{color:var(--red);}
-
-  #recovery-modal{position:fixed;inset:0;background:rgba(20,30,40,.55);z-index:1400;display:flex;align-items:center;justify-content:center;padding:20px;}
-  #recovery-modal[hidden]{display:none;}
-
-  #my-stats-modal{position:fixed;inset:0;background:rgba(20,30,40,.45);z-index:1300;display:flex;align-items:center;justify-content:center;padding:20px;}
-  #my-stats-modal[hidden]{display:none;}
-  #my-stats-modal .stats-card{background:var(--card);border-radius:var(--radius);box-shadow:0 8px 32px rgba(20,30,40,.24);max-width:520px;width:100%;max-height:86vh;overflow:auto;}
-  #my-stats-modal .stats-head{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--card);}
-  #my-stats-modal .stats-head h2{font-size:16.5px;margin:0;}
-  #my-stats-modal .stats-head .close{background:none;border:none;font-size:20px;color:var(--muted);cursor:pointer;line-height:1;}
-  #my-stats-modal .stats-body{padding:16px 20px 20px;}
-  #stats-modal .directory-box{margin-bottom:20px;}
-  #stats-modal table.stats-table td input[type="tel"]{width:100%;border:1px solid var(--line);border-radius:6px;padding:5px 7px;font-size:13px;font-family:inherit;}
-  #stats-modal .directory-saved{font-size:11px;color:var(--green);margin-left:6px;}
-
-  #message-modal{position:fixed;inset:0;background:rgba(20,30,40,.45);z-index:1300;display:flex;align-items:center;justify-content:center;padding:20px;}
-  #message-modal[hidden]{display:none;}
-  #message-modal .stats-card{background:var(--card);border-radius:var(--radius);box-shadow:0 8px 32px rgba(20,30,40,.24);max-width:520px;width:100%;max-height:86vh;overflow:auto;}
-  #message-modal .stats-head{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--card);}
-  #message-modal .stats-head h2{font-size:16.5px;margin:0;}
-  #message-modal .stats-head .close{background:none;border:none;font-size:20px;color:var(--muted);cursor:pointer;line-height:1;}
-  #message-modal .stats-body{padding:16px 20px 20px;}
-  #message-modal .recipient-list{border:1px solid var(--line);border-radius:8px;padding:8px 10px;max-height:150px;overflow:auto;margin-bottom:14px;font-size:13.5px;}
-  #message-modal .recipient-list label{display:flex;align-items:center;gap:6px;padding:3px 0;}
-  #message-modal input[type="text"], #message-modal textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13.5px;font-family:inherit;margin-bottom:12px;box-sizing:border-box;}
-  #message-modal textarea{min-height:110px;resize:vertical;}
-  #message-modal .field-label{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:6px;}
-  #message-modal .msg-actions{display:flex;gap:8px;flex-wrap:wrap;}
-  #message-modal .send-status{font-size:12.5px;margin-top:10px;}
-  #message-modal .send-status.ok{color:var(--green);}
-  #message-modal .send-status.err{color:var(--red);}
 </style>
 </head>
 <body>
@@ -259,29 +211,9 @@
     </form>
 
     <div class="auth-toggle">
-      <span id="to-signup">New technician? <button type="button" class="btn-link" id="show-signup">Create an account</button></span>
+      <span id="to-signup">New estimator? <button type="button" class="btn-link" id="show-signup">Create an account</button></span>
       <span id="to-signin" style="display:none;">Already have an account? <button type="button" class="btn-link" id="show-signin">Log in</button></span>
     </div>
-
-    <button type="button" class="btn-link" id="show-forgot" style="margin-top:10px;display:block;">Forgot password or can't log in?</button>
-    <form id="forgot-form" style="display:none;margin-top:12px;">
-      <div class="field"><label>Email</label><input type="email" id="fp-email" required></div>
-      <button class="btn btn-primary" type="submit">Send reset link</button>
-      <button type="button" class="btn-link" id="cancel-forgot" style="display:block;margin-top:8px;">Cancel</button>
-    </form>
-  </div>
-</div>
-
-<div id="recovery-modal" hidden>
-  <div class="auth-card" style="max-width:360px;">
-    <h1>Set a new password</h1>
-    <p class="sub">You followed a password reset link — choose a new password below.</p>
-    <div class="err" id="recovery-err"></div>
-    <form id="recovery-form">
-      <div class="field"><label>New password</label><input type="password" id="rec-pass" minlength="6" required autocomplete="new-password"></div>
-      <button class="btn btn-primary" type="submit">Save new password</button>
-      <button type="button" class="btn-link" id="recovery-cancel" style="display:block;margin-top:8px;">Cancel</button>
-    </form>
   </div>
 </div>
 
@@ -298,9 +230,6 @@
       <button id="vt-progress" class="active">Today's Progress</button>
       <button id="vt-priority">Oldest Homes</button>
     </div>
-    <button class="icon-btn" id="team-stats-btn" hidden>📊 Team Stats</button>
-    <button class="icon-btn" id="my-stats-btn">✅ My Stats</button>
-    <button class="icon-btn" id="message-team-btn" hidden>✉️ Message Team</button>
     <div class="datepick">
       Date: <input type="date" id="work-date">
     </div>
@@ -362,7 +291,7 @@
         <div class="section-title">Route assignment</div>
         <div class="assign-status" id="assign-status">Not assigned yet.</div>
         <div class="assign-admin" id="assign-admin" hidden>
-          <select id="assign-select"><option value="">— Select technician —</option></select>
+          <select id="assign-select"><option value="">— Select estimator —</option></select>
           <button class="btn btn-primary assign-btn" id="assign-btn">Assign</button>
         </div>
         <button class="assign-link" id="unassign-btn" hidden>Unassign this block</button>
@@ -394,100 +323,6 @@
   </div>
 </div>
 
-<div id="stats-modal" hidden>
-  <div class="stats-card">
-    <div class="stats-head">
-      <div>
-        <h2>Team Stats — Homes Visited</h2>
-      </div>
-      <button class="close" id="stats-close" aria-label="Close">✕</button>
-    </div>
-    <div class="stats-body">
-      <div class="invite-box">
-        <div class="section-title" style="margin-top:0;">Invite a technician</div>
-        <div class="row">
-          <input type="text" id="invite-name" placeholder="Name">
-          <input type="email" id="invite-email" placeholder="Email address">
-          <input type="tel" id="invite-phone" placeholder="Phone (optional)">
-          <button class="btn btn-primary" id="invite-send-btn">Send invite</button>
-        </div>
-        <div class="invite-msg" id="invite-msg"></div>
-      </div>
-
-      <div class="directory-box">
-        <div class="section-title" style="margin-top:0;">Team directory</div>
-        <table class="stats-table">
-          <thead><tr><th>Name</th><th>Email</th><th>Phone</th></tr></thead>
-          <tbody id="directory-body"><tr class="empty-row"><td colspan="3">Loading…</td></tr></tbody>
-        </table>
-      </div>
-
-      <div class="stats-daypick">Day: <input type="date" id="stats-date"></div>
-
-      <div class="section-title">That day</div>
-      <table class="stats-table">
-        <thead><tr><th>Employee</th><th class="num">Territories</th><th class="num">Homes</th></tr></thead>
-        <tbody id="stats-day-body"><tr class="empty-row"><td colspan="3">Loading…</td></tr></tbody>
-      </table>
-
-      <div class="section-title">All-time total</div>
-      <table class="stats-table">
-        <thead><tr><th>Employee</th><th class="num">Territories</th><th class="num">Homes</th></tr></thead>
-        <tbody id="stats-total-body"><tr class="empty-row"><td colspan="3">Loading…</td></tr></tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-<div id="my-stats-modal" hidden>
-  <div class="stats-card">
-    <div class="stats-head">
-      <div>
-        <h2>My Stats</h2>
-      </div>
-      <button class="close" id="my-stats-close" aria-label="Close">✕</button>
-    </div>
-    <div class="stats-body">
-      <div class="stats-daypick">Day: <input type="date" id="my-stats-date"></div>
-
-      <div class="section-title">That day</div>
-      <table class="stats-table">
-        <thead><tr><th colspan="2">Areas completed</th></tr></thead>
-        <tbody id="my-stats-day-areas"><tr class="empty-row"><td colspan="2">Loading…</td></tr></tbody>
-      </table>
-      <div class="stats-daypick" style="margin-top:10px;">Homes that day: <b id="my-stats-day-homes">0</b></div>
-
-      <div class="section-title">All-time total</div>
-      <div class="stats-daypick">Homes total: <b id="my-stats-total-homes">0</b> across <b id="my-stats-total-territories">0</b> territories</div>
-    </div>
-  </div>
-</div>
-
-<div id="message-modal" hidden>
-  <div class="stats-card">
-    <div class="stats-head">
-      <h2>Message the team</h2>
-      <button class="close" id="message-close" aria-label="Close">✕</button>
-    </div>
-    <div class="stats-body">
-      <div class="field-label">Send to</div>
-      <div class="recipient-list" id="message-recipients"></div>
-
-      <div class="field-label">Subject</div>
-      <input type="text" id="message-subject" placeholder="Subject">
-
-      <div class="field-label">Message</div>
-      <textarea id="message-body" placeholder="Write your message…"></textarea>
-
-      <div class="msg-actions">
-        <button class="btn btn-primary" id="message-send-btn">Send email</button>
-        <button class="btn" id="message-test-btn">Send test to myself</button>
-      </div>
-      <div class="send-status" id="message-status"></div>
-    </div>
-  </div>
-</div>
-
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -498,6 +333,9 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const STATUS_COLOR = { not_started: '#98a2ae', in_progress: '#e0a12b', completed: '#2e9e5b', skipped: '#d6483f' };
 const STATUS_LABEL = { not_started: 'Not started', in_progress: 'In progress', completed: 'Completed', skipped: 'Skipped' };
+
+// Kahuna office — 634 Mendelssohn Ave N, Minneapolis, MN 55427 (Google Business listing coordinates)
+const OFFICE_LOCATION = { lat: 44.9861367, lng: -93.397256, label: 'Kahuna Office — 634 Mendelssohn Ave N' };
 
 let state = {
   profile: null,
@@ -533,7 +371,7 @@ document.getElementById('show-signup').onclick = () => {
   document.getElementById('signup-form').style.display='block';
   document.getElementById('to-signup').style.display='none';
   document.getElementById('to-signin').style.display='inline';
-  document.getElementById('auth-sub').textContent = 'Create your technician account';
+  document.getElementById('auth-sub').textContent = 'Create your estimator account';
   clearAuthMsgs();
 };
 document.getElementById('show-signin').onclick = () => {
@@ -569,60 +407,7 @@ document.getElementById('signup-form').addEventListener('submit', async (e) => {
 
 document.getElementById('signout-btn').onclick = async () => { await sb.auth.signOut(); location.reload(); };
 
-document.getElementById('show-forgot').onclick = () => {
-  document.getElementById('signin-form').style.display = 'none';
-  document.getElementById('forgot-form').style.display = 'block';
-  document.getElementById('show-forgot').style.display = 'none';
-  clearAuthMsgs();
-};
-document.getElementById('cancel-forgot').onclick = () => {
-  document.getElementById('forgot-form').style.display = 'none';
-  document.getElementById('signin-form').style.display = 'block';
-  document.getElementById('show-forgot').style.display = 'block';
-  clearAuthMsgs();
-};
-document.getElementById('forgot-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  clearAuthMsgs();
-  const email = document.getElementById('fp-email').value.trim();
-  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
-  if (error) { showAuthErr(error.message); return; }
-  showAuthOk("If that email has an account, a reset link is on its way. Check spam if it doesn't show up in a few minutes.");
-  document.getElementById('forgot-form').reset();
-});
-
-document.getElementById('recovery-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const recErr = document.getElementById('recovery-err');
-  recErr.style.display = 'none';
-  const password = document.getElementById('rec-pass').value;
-  const { error } = await sb.auth.updateUser({ password });
-  if (error) {
-    recErr.textContent = /different from the old password/i.test(error.message)
-      ? "That's your current password — please choose a different one."
-      : error.message;
-    recErr.style.display = 'block';
-    return;
-  }
-  document.getElementById('recovery-modal').hidden = true;
-  alert('Password updated. You are now signed in.');
-});
-
-document.getElementById('recovery-cancel').onclick = () => {
-  document.getElementById('recovery-modal').hidden = true;
-  document.getElementById('recovery-err').style.display = 'none';
-  document.getElementById('rec-pass').value = '';
-};
-
 sb.auth.onAuthStateChange(async (event, session) => {
-  if (event === 'PASSWORD_RECOVERY') {
-    document.getElementById('recovery-modal').hidden = false;
-    // Strip the recovery token out of the URL so refreshing this tab later
-    // doesn't re-open this modal on its own.
-    if (window.history && window.history.replaceState) {
-      window.history.replaceState(null, '', location.pathname + location.search);
-    }
-  }
   if (session) {
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
@@ -647,9 +432,7 @@ async function boot(session) {
   const { data: profile } = await sb.from('profiles').select('*').eq('id', session.user.id).single();
   state.profile = profile;
   state.userId = session.user.id;
-  document.getElementById('who-box').innerHTML = `<b>${(profile?.full_name || session.user.email)}</b><br>${profile?.role === 'admin' ? 'Admin' : 'Technician'}`;
-  document.getElementById('team-stats-btn').hidden = profile?.role !== 'admin';
-  document.getElementById('message-team-btn').hidden = profile?.role !== 'admin';
+  document.getElementById('who-box').innerHTML = `<b>${(profile?.full_name || session.user.email)}</b><br>${profile?.role === 'admin' ? 'Admin' : 'Estimator'}`;
 
   document.getElementById('work-date').value = state.workDate;
   document.getElementById('work-date').max = todayStr();
@@ -666,16 +449,8 @@ async function boot(session) {
 
 function initMap() {
   map = L.map('map', { zoomControl: true }).setView([44.9856, -93.3492], 13);
-  // Satellite imagery (free, keyless Esri World Imagery -- true Google Maps satellite
-  // tiles require a paid Google Cloud API key and can't be embedded outside Google's
-  // own Maps API per their terms of service).
-  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-    maxZoom: 19, attribution: 'Imagery &copy; Esri, Maxar, Earthstar Geographics'
-  }).addTo(map);
-  // Road + highway label overlay on top of the imagery (transparent background),
-  // so real highway numbers show up without needing hand-drawn reference lines.
-  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', {
-    maxZoom: 19, attribution: '&copy; Esri', pane: 'overlayPane'
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 20, attribution: '&copy; OpenStreetMap &copy; CARTO'
   }).addTo(map);
   clusterGroup = L.markerClusterGroup({
     maxClusterRadius: 40,
@@ -683,7 +458,22 @@ function initMap() {
     iconCreateFunction: clusterIcon
   });
   map.addLayer(clusterGroup);
+  addOfficeMarker();
   initLocate();
+}
+
+/* ---- Kahuna office marker (fixed pin, never clusters) ---- */
+function addOfficeMarker() {
+  const icon = L.divIcon({
+    className: 'office-marker-wrap',
+    html: '<div class="office-marker"><span>🏢</span></div>',
+    iconSize: [30, 30],
+    iconAnchor: [15, 30],
+    popupAnchor: [0, -28]
+  });
+  L.marker([OFFICE_LOCATION.lat, OFFICE_LOCATION.lng], { icon, zIndexOffset: 950, keyboard: false })
+    .addTo(map)
+    .bindTooltip(OFFICE_LOCATION.label, { direction: 'top', offset: [0, -26] });
 }
 
 /* ---- Live technician location (blue dot) ---- */
@@ -827,226 +617,9 @@ async function loadAssignmentsForDate(dateStr) {
 }
 
 async function loadEstimators() {
-  const { data, error } = await sb.from('profiles').select('id, full_name, role, email, phone_number').order('full_name');
+  const { data, error } = await sb.from('profiles').select('id, full_name, role').order('full_name');
   if (error) { console.error(error); return; }
   state.estimators = data || [];
-}
-
-// ---------- TEAM STATS (admin) ----------
-function renderStatsRows(tbodyId, rows, emptyMsg) {
-  const tbody = document.getElementById(tbodyId);
-  if (!rows || !rows.length) { tbody.innerHTML = `<tr class="empty-row"><td colspan="3">${emptyMsg}</td></tr>`; return; }
-  tbody.innerHTML = rows.map(r => `
-    <tr>
-      <td>${r.full_name || 'Unknown'}</td>
-      <td class="num">${r.territories_completed}</td>
-      <td class="num homes">${r.homes}</td>
-    </tr>`).join('');
-}
-
-async function loadStatsDay(dateStr) {
-  const { data, error } = await sb.from('employee_homes_daily').select('*').eq('work_date', dateStr).order('homes', { ascending: false });
-  if (error) { console.error(error); renderStatsRows('stats-day-body', [], 'Error loading — see console'); return; }
-  renderStatsRows('stats-day-body', data, `No completions logged on ${dateStr}`);
-}
-
-async function loadStatsTotal() {
-  const { data, error } = await sb.from('employee_homes_total').select('*').order('homes', { ascending: false });
-  if (error) { console.error(error); renderStatsRows('stats-total-body', [], 'Error loading — see console'); return; }
-  renderStatsRows('stats-total-body', data, 'No completions logged yet');
-}
-
-function openStatsModal() {
-  const dateInput = document.getElementById('stats-date');
-  if (!dateInput.value) dateInput.value = state.workDate || todayStr();
-  document.getElementById('stats-modal').hidden = false;
-  loadStatsDay(dateInput.value);
-  loadStatsTotal();
-  renderDirectory();
-}
-
-function renderDirectory() {
-  const tbody = document.getElementById('directory-body');
-  const rows = (state.estimators || []).slice().sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
-  if (!rows.length) { tbody.innerHTML = '<tr class="empty-row"><td colspan="3">No one yet</td></tr>'; return; }
-  tbody.innerHTML = rows.map(p => `
-    <tr>
-      <td>${escapeHtml(p.full_name || 'Unknown')}${p.role === 'admin' ? ' (admin)' : ''}</td>
-      <td>${escapeHtml(p.email || '')}</td>
-      <td><input type="tel" data-id="${p.id}" value="${escapeHtml(p.phone_number || '')}" placeholder="Add phone"><span class="directory-saved" data-saved-for="${p.id}" hidden>Saved</span></td>
-    </tr>`).join('');
-  tbody.querySelectorAll('input[type="tel"]').forEach(input => {
-    input.addEventListener('change', async () => {
-      const id = input.dataset.id;
-      const value = input.value.trim();
-      const { error } = await sb.from('profiles').update({ phone_number: value || null }).eq('id', id);
-      const savedTag = tbody.querySelector(`[data-saved-for="${id}"]`);
-      if (error) { alert('Could not save phone number: ' + error.message); return; }
-      const est = state.estimators.find(e => e.id === id);
-      if (est) est.phone_number = value || null;
-      if (savedTag) {
-        savedTag.hidden = false;
-        setTimeout(() => { savedTag.hidden = true; }, 1500);
-      }
-    });
-  });
-}
-
-// ---------- INVITE A TECHNICIAN (admin) ----------
-async function sendInvite() {
-  const nameEl = document.getElementById('invite-name');
-  const emailEl = document.getElementById('invite-email');
-  const phoneEl = document.getElementById('invite-phone');
-  const msgEl = document.getElementById('invite-msg');
-  const email = emailEl.value.trim();
-  const full_name = nameEl.value.trim();
-  const phone = phoneEl.value.trim();
-  msgEl.className = 'invite-msg';
-  msgEl.textContent = '';
-  if (!email || !email.includes('@')) {
-    msgEl.className = 'invite-msg err';
-    msgEl.textContent = 'Enter a valid email address.';
-    return;
-  }
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) return;
-  try {
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/invite-technician`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`,
-        'apikey': SUPABASE_ANON_KEY,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ email, full_name, phone })
-    });
-    const out = await res.json().catch(() => ({}));
-    if (!res.ok || out.error) {
-      msgEl.className = 'invite-msg err';
-      msgEl.textContent = out.error || 'Could not send invite.';
-      return;
-    }
-    msgEl.className = 'invite-msg ok';
-    msgEl.textContent = `Invite sent to ${email}.`;
-    nameEl.value = '';
-    emailEl.value = '';
-    phoneEl.value = '';
-    await loadEstimators();
-  } catch (e) {
-    msgEl.className = 'invite-msg err';
-    msgEl.textContent = 'Network error sending invite.';
-  }
-}
-
-// ---------- MY STATS (everyone) ----------
-function escapeHtml(s) {
-  return String(s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
-}
-
-async function loadMyStatsDay(dateStr) {
-  const tbody = document.getElementById('my-stats-day-areas');
-  const { data, error } = await sb.from('employee_completions').select('*').eq('work_date', dateStr).eq('updated_by', state.userId).order('street_name');
-  if (error) { console.error(error); tbody.innerHTML = '<tr class="empty-row"><td colspan="2">Error loading</td></tr>'; return; }
-  if (!data || !data.length) {
-    tbody.innerHTML = `<tr class="empty-row"><td colspan="2">No completions on ${dateStr}</td></tr>`;
-    document.getElementById('my-stats-day-homes').textContent = '0';
-    return;
-  }
-  tbody.innerHTML = data.map(r => `<tr><td>${escapeHtml(r.street_name || r.territory_name)}${r.city ? ', ' + escapeHtml(r.city) : ''}</td><td class="num">${r.home_count}</td></tr>`).join('');
-  document.getElementById('my-stats-day-homes').textContent = data.reduce((s, r) => s + (r.home_count || 0), 0);
-}
-
-async function loadMyStatsTotal() {
-  const { data, error } = await sb.from('employee_homes_total').select('*').eq('updated_by', state.userId).maybeSingle();
-  if (error || !data) {
-    document.getElementById('my-stats-total-homes').textContent = '0';
-    document.getElementById('my-stats-total-territories').textContent = '0';
-    return;
-  }
-  document.getElementById('my-stats-total-homes').textContent = data.homes;
-  document.getElementById('my-stats-total-territories').textContent = data.territories_completed;
-}
-
-function openMyStatsModal() {
-  const dateInput = document.getElementById('my-stats-date');
-  if (!dateInput.value) dateInput.value = state.workDate || todayStr();
-  document.getElementById('my-stats-modal').hidden = false;
-  loadMyStatsDay(dateInput.value);
-  loadMyStatsTotal();
-}
-
-// ---------- MESSAGE THE TEAM (admin, real email via Resend) ----------
-function renderMessageRecipients() {
-  const box = document.getElementById('message-recipients');
-  const techs = (state.estimators || []).filter(e => e.role !== 'admin').slice().sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
-  if (!techs.length) { box.innerHTML = '<div class="empty-row">No technicians yet</div>'; return; }
-  box.innerHTML = `<label><input type="checkbox" id="message-recipient-all" checked><b>Everyone</b></label>` +
-    techs.map(t => `<label><input type="checkbox" class="message-recipient" value="${t.id}" checked disabled> ${escapeHtml(t.full_name || t.email || 'Unknown')}</label>`).join('');
-  const allBox = document.getElementById('message-recipient-all');
-  const techBoxes = box.querySelectorAll('.message-recipient');
-  allBox.onchange = () => {
-    techBoxes.forEach(cb => { cb.disabled = allBox.checked; if (allBox.checked) cb.checked = true; });
-  };
-}
-
-function openMessageModal() {
-  document.getElementById('message-modal').hidden = false;
-  document.getElementById('message-status').textContent = '';
-  document.getElementById('message-status').className = 'send-status';
-  renderMessageRecipients();
-}
-
-async function sendTeamMessage(isTest) {
-  const statusEl = document.getElementById('message-status');
-  const subject = document.getElementById('message-subject').value.trim();
-  const text = document.getElementById('message-body').value.trim();
-  statusEl.className = 'send-status';
-  statusEl.textContent = '';
-  if (!subject || !text) {
-    statusEl.className = 'send-status err';
-    statusEl.textContent = 'Add a subject and a message first.';
-    return;
-  }
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) return;
-
-  const payload = { subject, text, test: !!isTest };
-  if (!isTest) {
-    const allChecked = document.getElementById('message-recipient-all').checked;
-    if (!allChecked) {
-      payload.recipient_ids = Array.from(document.querySelectorAll('.message-recipient:checked')).map(cb => cb.value);
-    }
-  }
-
-  statusEl.textContent = isTest ? 'Sending test…' : 'Sending…';
-  try {
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/send-team-message`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`,
-        'apikey': SUPABASE_ANON_KEY,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    });
-    const out = await res.json().catch(() => ({}));
-    if (!res.ok || out.error) {
-      statusEl.className = 'send-status err';
-      statusEl.textContent = out.error || 'Could not send.';
-      return;
-    }
-    statusEl.className = 'send-status ok';
-    statusEl.textContent = isTest
-      ? `Test sent to ${out.sent_to?.[0] || 'you'}. Check your inbox.`
-      : `Sent to ${(out.sent_to || []).length} recipient(s).`;
-    if (!isTest) {
-      document.getElementById('message-subject').value = '';
-      document.getElementById('message-body').value = '';
-    }
-  } catch (e) {
-    statusEl.className = 'send-status err';
-    statusEl.textContent = 'Network error sending message.';
-  }
 }
 
 function assignmentFor(territoryId) {
@@ -1216,7 +789,7 @@ function renderAssignmentSection(territoryId) {
   unassignBtn.hidden = !(isAdmin && assignment);
   if (isAdmin) {
     const select = document.getElementById('assign-select');
-    select.innerHTML = '<option value="">— Select technician —</option>' + state.estimators.map(e =>
+    select.innerHTML = '<option value="">— Select estimator —</option>' + state.estimators.map(e =>
       `<option value="${e.id}"${assignment?.assigned_to === e.id ? ' selected' : ''}>${e.full_name || 'Unnamed'}${e.role === 'admin' ? ' (admin)' : ''}</option>`
     ).join('');
   }
@@ -1229,7 +802,7 @@ document.getElementById('assign-btn').onclick = async () => {
   const territoryId = state.selectedTerritoryId;
   if (!territoryId) return;
   const estimatorId = document.getElementById('assign-select').value;
-  if (!estimatorId) { alert('Choose a technician first.'); return; }
+  if (!estimatorId) { alert('Choose an estimator first.'); return; }
   const payload = { territory_id: territoryId, work_date: state.workDate, assigned_to: estimatorId, assigned_by: state.userId };
   const { error } = await sb.from('territory_assignments').upsert(payload, { onConflict: 'territory_id,work_date' });
   if (error) { alert('Could not assign this block: ' + error.message); return; }
@@ -1414,20 +987,6 @@ function wireUI() {
   document.getElementById('toggle-list-btn').onclick = () => document.getElementById('list-drawer').classList.add('open');
   document.getElementById('close-list').onclick = () => document.getElementById('list-drawer').classList.remove('open');
 
-  document.getElementById('team-stats-btn').onclick = openStatsModal;
-  document.getElementById('stats-close').onclick = () => document.getElementById('stats-modal').hidden = true;
-  document.getElementById('stats-date').onchange = (e) => loadStatsDay(e.target.value);
-  document.getElementById('invite-send-btn').onclick = sendInvite;
-
-  document.getElementById('my-stats-btn').onclick = openMyStatsModal;
-  document.getElementById('my-stats-close').onclick = () => document.getElementById('my-stats-modal').hidden = true;
-
-  document.getElementById('message-team-btn').onclick = openMessageModal;
-  document.getElementById('message-close').onclick = () => document.getElementById('message-modal').hidden = true;
-  document.getElementById('message-send-btn').onclick = () => sendTeamMessage(false);
-  document.getElementById('message-test-btn').onclick = () => sendTeamMessage(true);
-  document.getElementById('my-stats-date').onchange = (e) => loadMyStatsDay(e.target.value);
-
   document.querySelectorAll('#list-filters button').forEach(btn => {
     btn.onclick = () => {
       document.querySelectorAll('#list-filters button').forEach(b=>b.classList.remove('active'));
@@ -1449,14 +1008,28 @@ function setView(v) {
   renderAll();
 }
 
-/* ---- Register a minimal service worker so Chrome will treat this as a real     ---- */
-/* ---- installable app (required for beforeinstallprompt / a stable home icon).  ---- */
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(() => {});
-}
-
 /* ---- Add to Home Screen (installable web app) ---- */
 (function initAddToHomeScreen(){
+  // Build a web app manifest at runtime (keeps everything in this one file).
+  try {
+    const manifest = {
+      name: "Kahuna Snow Canvass",
+      short_name: "Kahuna Snow",
+      start_url: ".",
+      scope: ".",
+      display: "standalone",
+      background_color: "#f6f8fa",
+      theme_color: "#1d6fb8",
+      icons: [
+        { src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAAFKUlEQVR4nO3d3XHbOBiGUWZn24jbcTlJKS4nbseNZC/ijD1eSpQogMSH95zb3czwBw8Aamjp2/cfv34vEOqfsw8AziQAogmAaAIgmgCIJgCiCYBoAiCaAIgmAKIJgGgCIJoAiCYAogmAaAIgmgCIJgCiCYBoAiCaAIgmAKIJgGgCIJoAiCYAogmAaAIgmgCIJgCiCYBoAiCaAIgmAKIJgGgCIJoAiCYAogmAaAIgmgCIJgCiCYBoAiCaAFa8vTyffQjNzXhOLXz7/uPX77MPYhRfB8nTz9eTjqStWc+rhX/PPoARpM2Of89XCLZAy7JcHggzhHHpHAz+P6wAG9YG0KiDZ4Zgj2YFeDfqoO4h6Vy3CIBoAiCaAN7dun8eeftw67F5VvggAKIJYMmcERPPeY2PQZePrUPKoBh5G3c0r0Ks2Aph1AFU9bjPZAu0YmugVFwpDP51VoAN9wz2owbZiMdUlRVggwE0NwFMTLzbBLDh7eW57ECq+KxyNAHcwECalwCumGHgz3AOPQmAaAK4YKaZc6Zzac2rEBfM8npE1Qf4owhgw+cBVCUGg/52tkB3ePr5enVwnR3I1vHxfwLY4cxB5lse2hLATmd8lcrZK8yMBPCAUb5PyOy/nwCKsPXpQwAPGmUVYB8BFGD270cADVgF6hJAZ49GYPbvSwCNGJA1CaCh1lshs39/AhiU54djCKCx3g/EZv+2BDAgW5/jCKADH4vWIYCDbUVg9j+WADoxYGsQQEf3boXM/sfzJ5En8TwwhogV4MzB9ujsfdbsnxJoyQD23JyKN7TS4K94fZelaADLcvsF//z/vb08l7pRRx/r1+uz5xpXUy6AFgO68g3rZe913BPMSMoFsObeT1W2/ltLvV6HbmnPdao42NeU+oWYWy76133znn/TUouB0uv4Kl7P1oYNYJYZhj9GjWKKLRDsJQCiCYBoAiDasA/Bl1x7OB7xE4uRPwValvafBI36sHvJFCvApa8F37oZ1W5WD3uu0Uxfw14ugK8Xfs+NOPIGVngZbu/1aHEvzlYugL9uvWkz3KSj7LlW1VeDkn8P0GK2Yt3e30aren3LrgD3qHpzzpRyzSICOFOFl+GSldwCVXHvx4UG+/GsACe4tL3wfULHE0AnvuGhBgEMxipwLAF00Gv2F0F7AhiQbdJxBNBYq9nfVugYAmjI4KxHAAfYu6WxCvQngEZ87FmTAAZnFehLAA2cNfuL4HECeNARg9A2qh8BdNJ60NoK9SGAB3jwrU8AhVgF2hPADte+lr3Sj1oggLuM8AMb1wIb4fiq8RdhG+4ZUKPs/T8f8yjHNCoBXDDLTPr3PISwzhbogpkGzEzn0poAiCaAK2aYOWc4h54EcIOKg6jiMZ9BABuefr6WfCB+e3kWwQ0EMLGK4R5NABsMormV+4WYo2wN/BG3FzP9cstRrAArKg7+LVaydQL4pPq7NFthVj+/HrwKsdR83+cRXo/4YAVYMgdC4jmvEQDRBPDu1hlx5D30rcdm9v8gAKIJgGgCeDfy1qa1pHPd4mPQDZX2y354735WgGXu7/fxVSrXWQGW/b+OXtUMYbfiZbgVM75LP+M5tSAAonkGIJoAiCYAogmAaAIgmgCIJgCiCYBoAiCaAIgmAKIJgGgCIJoAiCYAogmAaAIgmgCIJgCiCYBoAiCaAIgmAKIJgGgCIJoAiCYAogmAaAIgmgCIJgCiCYBoAiCaAIgmAKIJgGgCIJoAiCYAogmAaAIgmgCIJgCiCYBo/wG9ydUif0NBBwAAAABJRU5ErkJggg==", sizes: "192x192", type: "image/png", purpose: "any" },
+        { src: "data:image/png;base64,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", sizes: "512x512", type: "image/png", purpose: "any" }
+      ]
+    };
+    const url = URL.createObjectURL(new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" }));
+    const link = document.getElementById('app-manifest');
+    if (link) link.href = url;
+  } catch (e) { /* non-fatal */ }
+
   const banner = document.getElementById('a2hs');
   if (!banner) return;
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
