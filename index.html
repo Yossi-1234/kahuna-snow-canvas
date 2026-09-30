@@ -171,6 +171,17 @@
     background:rgba(26,115,232,.35);animation:userpulse 2s ease-out infinite;}
   @keyframes userpulse{0%{transform:scale(1);opacity:.7}100%{transform:scale(3.2);opacity:0}}
 
+  /* Kahuna office marker (fixed pin, never clusters) */
+  .office-marker-wrap{background:transparent!important;border:none!important;}
+  .office-marker{
+    width:48px;height:48px;border-radius:50% 50% 50% 0;
+    background:#7b3fa0;border:3px solid #fff;
+    transform:rotate(-45deg);
+    box-shadow:0 3px 10px rgba(0,0,0,.45);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .office-marker span{transform:rotate(45deg);font-size:24px;line-height:1;}
+
   /* Add to Home Screen banner */
   #a2hs{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:1200;
     display:none;align-items:center;gap:10px;background:var(--ink);color:#fff;
@@ -693,13 +704,13 @@ function addOfficeMarker() {
   const icon = L.divIcon({
     className: 'office-marker-wrap',
     html: '<div class="office-marker"><span>🏢</span></div>',
-    iconSize: [30, 30],
-    iconAnchor: [15, 30],
-    popupAnchor: [0, -28]
+    iconSize: [48, 48],
+    iconAnchor: [24, 48],
+    popupAnchor: [0, -44]
   });
   L.marker([OFFICE_LOCATION.lat, OFFICE_LOCATION.lng], { icon, zIndexOffset: 950, keyboard: false })
     .addTo(map)
-    .bindTooltip(OFFICE_LOCATION.label, { direction: 'top', offset: [0, -26] });
+    .bindTooltip(OFFICE_LOCATION.label, { direction: 'top', offset: [0, -40] });
 }
 
 /* ---- Live technician location (blue dot) ---- */
