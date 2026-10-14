@@ -245,6 +245,12 @@
   #message-modal .send-status{font-size:12.5px;margin-top:10px;}
   #message-modal .send-status.ok{color:var(--green);}
   #message-modal .send-status.err{color:var(--red);}
+
+  /* Prominent locate-me button */
+  #locate-btn{right:14px!important;bottom:calc(110px + env(safe-area-inset-bottom))!important;width:58px!important;height:58px!important;z-index:1000!important;background:#1a73e8!important;color:#fff!important;box-shadow:0 3px 12px rgba(0,0,0,.5)!important;border:3px solid #fff!important;}
+  #locate-btn svg{width:30px;height:30px;}
+  #locate-btn.following{background:#0b3d91!important;}
+  #locate-btn::after{content:'My location';position:absolute;right:66px;top:50%;transform:translateY(-50%);background:rgba(20,30,40,.88);color:#fff;font-size:12px;font-weight:700;padding:4px 8px;border-radius:6px;white-space:nowrap;pointer-events:none;}
 </style>
 </head>
 <body>
@@ -1115,7 +1121,7 @@ function valueColor(score) {
 
 function markerColorFor(t) {
   if (state.view === 'priority') return priorityColor(t.priority_score);
-  if (state.view === 'value') return valueColor(t.value_score);
+  if (state.view === 'value') return valueColor(t.value_pct);
   return STATUS_COLOR[statusFor(t.id)];
 }
 
@@ -1132,14 +1138,18 @@ function renderAll() {
   state.markers = {};
   for (const t of state.territories) {
     if (t.centroid_lat == null || t.centroid_lng == null) continue;
-    const topValue = state.view === 'value' && Number(t.value_score) >= 75;
+    const st = statusFor(t.id);
+    const isVal = state.view === 'value';
+    const topValue = isVal && Number(t.value_score) >= 75;
+    const ringColor = isVal ? (st === 'completed' ? '#0b6b2e' : st === 'in_progress' ? '#b8780a' : (topValue ? '#fff3b0' : '#fff')) : '#fff';
+    const ringW = isVal ? (st === 'completed' ? 4 : st === 'in_progress' ? 3 : (topValue ? 3.5 : 1.5)) : 1.5;
     const marker = L.circleMarker([t.centroid_lat, t.centroid_lng], {
       radius: markerRadiusFor(t),
-      color: topValue ? '#fff3b0' : '#fff', weight: topValue ? 3.5 : 1.5,
-      fillColor: markerColorFor(t), fillOpacity: state.view === 'value' && t.value_score == null ? 0.45 : 0.9,
-      statusKey: statusFor(t.id),
+      color: ringColor, weight: ringW,
+      fillColor: markerColorFor(t), fillOpacity: isVal && t.value_pct == null ? 0.45 : 0.9,
+      statusKey: st,
       priorityScore: t.priority_score ?? 0,
-      valueScore: t.value_score == null ? null : Number(t.value_score)
+      valueScore: t.value_pct == null ? null : Number(t.value_pct)
     });
     marker.on('click', () => openPanel(t.id));
     const who = assigneeNameFor(t.id);
@@ -1177,10 +1187,12 @@ function renderLegend() {
   if (state.view === 'value') {
     title.textContent = 'Home value + closeness';
     body.innerHTML = `
-      <div class="row"><span class="dot" style="background:${valueColor(95)};box-shadow:0 0 0 2px #fff3b0"></span> High value, tight lots (top picks)</div>
+      <div class="row"><span class="dot" style="background:${valueColor(95)};box-shadow:0 0 0 2px #fff3b0"></span> Highest home values</div>
       <div class="row"><span class="dot" style="background:${valueColor(50)}"></span> Mid</div>
-      <div class="row"><span class="dot" style="background:${valueColor(8)}"></span> Lower value / spread out</div>
-      <div class="row"><span class="dot" style="background:${valueColor(null)}"></span> No value data</div>`;
+      <div class="row"><span class="dot" style="background:${valueColor(8)}"></span> Lower home values</div>
+      <div class="row"><span class="dot" style="background:${valueColor(null)}"></span> No value data</div>
+      <div class="row" style="margin-top:6px;">Bigger dot = high value + homes close together</div>
+      <div class="row"><span class="dot" style="background:#fff;border:3px solid #0b6b2e;box-sizing:border-box"></span> Green ring = completed</div>`;
   } else if (state.view === 'priority') {
     title.textContent = 'Home age priority';
     body.innerHTML = `
@@ -1250,7 +1262,7 @@ async function openPanel(territoryId) {
   addrList.innerHTML = '<li>Loading…</li>';
   document.getElementById('panel').classList.add('open');
 
-  const { data: parcels } = await sb.from('parcels').select('address, year_built').eq('territory_id', territoryId).order('address');
+  const { data: parcels } = await sb.from('parcels').select('address, year_built, lat, lng').eq('territory_id', territoryId).order('address');
   state.currentParcels = parcels || [];
   addrList.innerHTML = state.currentParcels.map(p => `<li><span>${p.address}</span><span class="yr">${p.year_built ?? ''}</span></li>`).join('');
 }
@@ -1340,14 +1352,20 @@ document.getElementById('release-btn').onclick = async () => {
 
 // ---------- GOOGLE MAPS NAVIGATION ----------
 document.getElementById('navigate-btn').onclick = () => {
-  const parcels = state.currentParcels || [];
-  if (!parcels.length) { alert('No addresses found for this block yet.'); return; }
-  const cityState = 'Golden Valley, MN';
-  const first = `${parcels[0].address}, ${cityState}`;
-  const last = `${parcels[parcels.length - 1].address}, ${cityState}`;
-  let url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(last)}&travelmode=driving`;
-  if (parcels.length > 1) url += `&waypoints=${encodeURIComponent(first)}`;
-  window.open(url, '_blank', 'noopener');
+  const t = state.territories.find(x => x.id === state.selectedTerritoryId);
+  const ps = (state.currentParcels || []).filter(p => p.lat != null && p.lng != null)
+    .sort((a, b) => (parseInt(a.address, 10) || 0) - (parseInt(b.address, 10) || 0));
+  const ll = o => o.lat + ',' + o.lng;
+  let url;
+  if (ps.length) {
+    url = 'https://www.google.com/maps/dir/?api=1&destination=' + ll(ps[ps.length - 1]) + '&travelmode=driving';
+    if (ps.length > 1) url += '&waypoints=' + ll(ps[0]);
+  } else if (t && t.centroid_lat != null) {
+    url = 'https://www.google.com/maps/dir/?api=1&destination=' + t.centroid_lat + ',' + t.centroid_lng + '&travelmode=driving';
+  } else { alert('No location found for this block.'); return; }
+  const a = document.createElement('a');
+  a.href = url; a.target = '_blank'; a.rel = 'noopener';
+  document.body.appendChild(a); a.click(); a.remove();
 };
 
 async function setStatus(newStatus) {
