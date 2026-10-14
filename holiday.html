@@ -68,6 +68,11 @@
     #stats-bar{top:56px;left:56px;right:10px;max-width:none;font-size:11px;padding:6px 10px;gap:10px;flex-wrap:nowrap;overflow-x:auto;}
     #panel{width:100%;max-width:100%;}
   }
+
+  #locate-btn{right:14px!important;bottom:calc(110px + env(safe-area-inset-bottom))!important;width:58px!important;height:58px!important;z-index:1000!important;background:#1a73e8!important;color:#fff!important;box-shadow:0 3px 12px rgba(0,0,0,.5)!important;border:3px solid #fff!important;}
+  #locate-btn svg{width:30px;height:30px;}
+  #locate-btn.following{background:#0b3d91!important;}
+  #locate-btn::after{content:'My location';position:absolute;right:66px;top:50%;transform:translateY(-50%);background:rgba(20,30,40,.88);color:#fff;font-size:12px;font-weight:700;padding:4px 8px;border-radius:6px;white-space:nowrap;pointer-events:none;}
 </style>
 </head>
 <body>
@@ -176,10 +181,12 @@ function renderLegend(){
   const lg=document.getElementById('legend');
   lg.innerHTML = S.view==='value'
     ? `<div style="font-weight:700;color:var(--ink);">Home value + closeness</div>
-       <div class="row"><span class="dot" style="background:${valueColor(95)};box-shadow:0 0 0 2px #fff3b0"></span> High value, tight lots</div>
+       <div class="row"><span class="dot" style="background:${valueColor(95)};box-shadow:0 0 0 2px #fff3b0"></span> Highest home values</div>
        <div class="row"><span class="dot" style="background:${valueColor(50)}"></span> Mid</div>
-       <div class="row"><span class="dot" style="background:${valueColor(8)}"></span> Lower value / spread out</div>
-       <div class="row"><span class="dot" style="background:${valueColor(null)}"></span> No value data</div>`
+       <div class="row"><span class="dot" style="background:${valueColor(8)}"></span> Lower home values</div>
+       <div class="row"><span class="dot" style="background:${valueColor(null)}"></span> No value data</div>
+       <div class="row" style="margin-top:6px;">Bigger dot = high value + homes close together</div>
+       <div class="row"><span class="dot" style="background:#fff;border:3px solid #0b6b2e;box-sizing:border-box"></span> Green ring = hung</div>`
     : `<div style="font-weight:700;color:var(--ink);">Door hangers</div>
        <div class="row"><span class="dot" style="background:#98a2ae"></span> Not hit yet</div>
        <div class="row"><span class="dot" style="background:#e0a12b"></span> In progress</div>
@@ -211,8 +218,10 @@ function render(){
     const s = stOf(t.id);
     if(s==='completed'){done++;homesDone+=t.home_count||0;} else if(s==='in_progress')prog++;
     if(t.centroid_lat==null)continue;
-    const vs = t.value_score==null?null:Number(t.value_score), isV=S.view==='value', top=isV&&vs>=75;
-    const m = L.circleMarker([t.centroid_lat,t.centroid_lng],{radius:isV?4+((vs||0)/100)*16:6+Math.min(t.home_count,15)*0.7,color:top?'#fff3b0':'#fff',weight:top?3.5:1.5,fillColor:isV?valueColor(vs):COLOR[s],fillOpacity:isV&&vs==null?.45:.9,statusKey:s,valueScore:vs});
+    const vs = t.value_score==null?null:Number(t.value_score), vp = t.value_pct==null?null:Number(t.value_pct), isV=S.view==='value', top=isV&&vs>=75;
+    const ringC = isV ? (s==='completed'?'#0b6b2e':s==='in_progress'?'#b8780a':(top?'#fff3b0':'#fff')) : '#fff';
+    const ringW = isV ? (s==='completed'?4:s==='in_progress'?3:(top?3.5:1.5)) : 1.5;
+    const m = L.circleMarker([t.centroid_lat,t.centroid_lng],{radius:isV?4+((vs||0)/100)*16:6+Math.min(t.home_count,15)*0.7,color:ringC,weight:ringW,fillColor:isV?valueColor(vp):COLOR[s],fillOpacity:isV&&vp==null?.45:.9,statusKey:s,valueScore:vp});
     m.on('click',()=>openPanel(t.id));
     m.bindTooltip(`${t.name} · ${t.home_count} homes`,{direction:'top',offset:[0,-6]});
     cluster.addLayer(m); S.markers[t.id]=m;
@@ -234,7 +243,7 @@ async function openPanel(id){
   document.getElementById('addr-title').textContent=`Homes in this block (${t.home_count})`;
   const ul=document.getElementById('p-addrs'); ul.innerHTML='<li>Loading…</li>';
   document.getElementById('panel').classList.add('open');
-  const {data}=await sb.from('parcels').select('address,year_built').eq('territory_id',id).order('address');
+  const {data}=await sb.from('parcels').select('address,year_built,lat,lng').eq('territory_id',id).order('address');
   S.parcels=data||[];
   ul.innerHTML=S.parcels.map(p=>`<li><span>${p.address}</span><span class="yr">${p.year_built??''}</span></li>`).join('');
 }
@@ -276,11 +285,13 @@ function wire(){
   document.getElementById('act-clear').onclick=clearStatus;
   document.getElementById('save-note').onclick=saveNote;
   document.getElementById('nav-btn').onclick=()=>{
-    const p=S.parcels; if(!p.length){alert('No addresses found for this block.');return;}
-    const cs='Plymouth, MN', first=`${p[0].address}, ${cs}`, last=`${p[p.length-1].address}, ${cs}`;
-    let url=`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(last)}&travelmode=driving`;
-    if(p.length>1)url+=`&waypoints=${encodeURIComponent(first)}`;
-    window.open(url,'_blank','noopener');
+    const t=S.terr.find(x=>x.id===S.sel);
+    const ps=(S.parcels||[]).filter(p=>p.lat!=null&&p.lng!=null).sort((a,b)=>(parseInt(a.address,10)||0)-(parseInt(b.address,10)||0));
+    const ll=o=>o.lat+','+o.lng; let url;
+    if(ps.length){ url='https://www.google.com/maps/dir/?api=1&destination='+ll(ps[ps.length-1])+'&travelmode=driving'; if(ps.length>1)url+='&waypoints='+ll(ps[0]); }
+    else if(t&&t.centroid_lat!=null){ url='https://www.google.com/maps/dir/?api=1&destination='+t.centroid_lat+','+t.centroid_lng+'&travelmode=driving'; }
+    else { alert('No location found for this block.'); return; }
+    const a=document.createElement('a'); a.href=url; a.target='_blank'; a.rel='noopener'; document.body.appendChild(a); a.click(); a.remove();
   };
   const inp=document.getElementById('search-input'), res=document.getElementById('search-results'); let tm;
   inp.addEventListener('input',()=>{clearTimeout(tm);const q=inp.value.trim();if(q.length<2){res.style.display='none';return;}tm=setTimeout(()=>search(q),220);});
