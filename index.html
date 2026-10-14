@@ -308,6 +308,7 @@
     <div id="view-toggle">
       <button id="vt-progress" class="active">Today's Progress</button>
       <button id="vt-priority">Oldest Homes</button>
+      <button id="vt-value">💰 Value</button>
     </div>
     <button class="icon-btn" id="team-stats-btn" hidden>📊 Team Stats</button>
     <a class="icon-btn" id="holiday-btn" href="holiday.html" hidden style="text-decoration:none;">🎄 Holiday Lights</a>
@@ -782,7 +783,14 @@ function clusterIcon(cluster) {
   const children = cluster.getAllChildMarkers();
   const total = children.length;
   let color;
-  if (state.view === 'priority') {
+  if (state.view === 'value') {
+    let best = null;
+    for (const m of children) {
+      const v = m.options.valueScore;
+      if (typeof v === 'number' && (best === null || v > best)) best = v;
+    }
+    color = valueColor(best);   // cluster shows its best block so hot spots stay visible when zoomed out
+  } else if (state.view === 'priority') {
     let sum = 0, n = 0;
     for (const m of children) {
       if (typeof m.options.priorityScore === 'number') { sum += m.options.priorityScore; n++; }
@@ -1095,12 +1103,27 @@ function priorityColor(score) {
   return `rgb(${r},${g},${b})`;
 }
 
+// Value view: gray (low) -> gold (mid) -> hot red (high). Unscored = pale gray.
+function valueColor(score) {
+  if (score == null) return '#c9d1d9';
+  const s = Math.max(0, Math.min(100, Number(score))) / 100;
+  const lerp = (a, b, k) => Math.round(a + (b - a) * k);
+  const lo = [120, 135, 150], mid = [245, 190, 60], hi = [214, 40, 57];
+  const [a, b, k] = s < 0.5 ? [lo, mid, s / 0.5] : [mid, hi, (s - 0.5) / 0.5];
+  return `rgb(${lerp(a[0], b[0], k)},${lerp(a[1], b[1], k)},${lerp(a[2], b[2], k)})`;
+}
+
 function markerColorFor(t) {
   if (state.view === 'priority') return priorityColor(t.priority_score);
+  if (state.view === 'value') return valueColor(t.value_score);
   return STATUS_COLOR[statusFor(t.id)];
 }
 
 function markerRadiusFor(t) {
+  if (state.view === 'value') {
+    const s = t.value_score == null ? 0 : Number(t.value_score);
+    return 4 + (s / 100) * 16;   // top-value, tight-lot blocks become big dots
+  }
   return 6 + Math.min(t.home_count, 15) * 0.7;
 }
 
@@ -1109,12 +1132,14 @@ function renderAll() {
   state.markers = {};
   for (const t of state.territories) {
     if (t.centroid_lat == null || t.centroid_lng == null) continue;
+    const topValue = state.view === 'value' && Number(t.value_score) >= 75;
     const marker = L.circleMarker([t.centroid_lat, t.centroid_lng], {
       radius: markerRadiusFor(t),
-      color: '#fff', weight: 1.5,
-      fillColor: markerColorFor(t), fillOpacity: 0.9,
+      color: topValue ? '#fff3b0' : '#fff', weight: topValue ? 3.5 : 1.5,
+      fillColor: markerColorFor(t), fillOpacity: state.view === 'value' && t.value_score == null ? 0.45 : 0.9,
       statusKey: statusFor(t.id),
-      priorityScore: t.priority_score ?? 0
+      priorityScore: t.priority_score ?? 0,
+      valueScore: t.value_score == null ? null : Number(t.value_score)
     });
     marker.on('click', () => openPanel(t.id));
     const who = assigneeNameFor(t.id);
@@ -1149,7 +1174,14 @@ function renderStats() {
 function renderLegend() {
   const body = document.getElementById('legend-body');
   const title = document.getElementById('legend-title');
-  if (state.view === 'priority') {
+  if (state.view === 'value') {
+    title.textContent = 'Home value + closeness';
+    body.innerHTML = `
+      <div class="row"><span class="dot" style="background:${valueColor(95)};box-shadow:0 0 0 2px #fff3b0"></span> High value, tight lots (top picks)</div>
+      <div class="row"><span class="dot" style="background:${valueColor(50)}"></span> Mid</div>
+      <div class="row"><span class="dot" style="background:${valueColor(8)}"></span> Lower value / spread out</div>
+      <div class="row"><span class="dot" style="background:${valueColor(null)}"></span> No value data</div>`;
+  } else if (state.view === 'priority') {
     title.textContent = 'Home age priority';
     body.innerHTML = `
       <div class="row"><span class="dot" style="background:${priorityColor(10)}"></span> Newer homes</div>
@@ -1169,6 +1201,7 @@ function renderList() {
   else if (state.listFilter === 'unassigned') items = items.filter(t => !assignmentFor(t.id));
   else if (state.listFilter !== 'all') items = items.filter(t => statusFor(t.id) === state.listFilter);
   if (state.view === 'priority') items.sort((a,b) => (b.priority_score??0) - (a.priority_score??0));
+  if (state.view === 'value') items.sort((a,b) => (Number(b.value_score)||-1) - (Number(a.value_score)||-1));
   listBody.innerHTML = items.map(t => {
     const s = statusFor(t.id);
     const who = assigneeNameFor(t.id);
@@ -1191,7 +1224,7 @@ async function openPanel(territoryId) {
   const t = state.territories.find(x => x.id === territoryId);
   if (!t) return;
   document.getElementById('p-name').textContent = t.name;
-  document.getElementById('p-meta').textContent = `${t.home_count} homes · avg built ${t.avg_year_built ?? '—'} · oldest ${t.oldest_year_built ?? '—'}${t.priority_rank ? ' · priority #' + t.priority_rank + ' of ' + state.territories.length : ''}`;
+  document.getElementById('p-meta').textContent = `${t.home_count} homes · avg built ${t.avg_year_built ?? '—'} · oldest ${t.oldest_year_built ?? '—'}${t.priority_rank ? ' · priority #' + t.priority_rank + ' of ' + state.territories.length : ''}${t.avg_emv ? ' · avg value $' + Math.round(t.avg_emv/1000).toLocaleString() + 'k · ~' + Math.round(t.spacing_m) + ' m between homes' : ''}`;
   const s = statusFor(territoryId);
   const statusRow = state.statusByTerritory[territoryId];
   // A carried-forward (inherited) status has an earlier work_date than the day
@@ -1439,6 +1472,7 @@ function wireUI() {
 
   document.getElementById('vt-progress').onclick = () => setView('progress');
   document.getElementById('vt-priority').onclick = () => setView('priority');
+  document.getElementById('vt-value').onclick = () => setView('value');
 
   document.getElementById('toggle-list-btn').onclick = () => document.getElementById('list-drawer').classList.add('open');
   document.getElementById('close-list').onclick = () => document.getElementById('list-drawer').classList.remove('open');
@@ -1475,6 +1509,7 @@ function setView(v) {
   state.view = v;
   document.getElementById('vt-progress').classList.toggle('active', v==='progress');
   document.getElementById('vt-priority').classList.toggle('active', v==='priority');
+  document.getElementById('vt-value').classList.toggle('active', v==='value');
   renderAll();
 }
 
