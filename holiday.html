@@ -76,6 +76,7 @@
   <header>
     <div class="brand">🎄 Kahuna <span>Holiday Lights — Plymouth</span></div>
     <div class="spacer"></div>
+    <button id="view-btn">💰 Value view</button>
     <a class="btn-link" href="index.html">← Snow Canvass</a>
   </header>
   <div id="main">
@@ -163,6 +164,28 @@ async function loadData(){
   S.status = {}; for (const r of (st||[])) S.status[r.territory_id] = r;
 }
 const stOf = id => S.status[id]?.status || 'not_started';
+S.view = 'status';
+function valueColor(score){
+  if(score==null) return '#c9d1d9';
+  const s=Math.max(0,Math.min(100,Number(score)))/100, L=(a,b,k)=>Math.round(a+(b-a)*k);
+  const lo=[120,135,150], mid=[245,190,60], hi=[214,40,57];
+  const [a,b,k]= s<0.5?[lo,mid,s/0.5]:[mid,hi,(s-0.5)/0.5];
+  return `rgb(${L(a[0],b[0],k)},${L(a[1],b[1],k)},${L(a[2],b[2],k)})`;
+}
+function renderLegend(){
+  const lg=document.getElementById('legend');
+  lg.innerHTML = S.view==='value'
+    ? `<div style="font-weight:700;color:var(--ink);">Home value + closeness</div>
+       <div class="row"><span class="dot" style="background:${valueColor(95)};box-shadow:0 0 0 2px #fff3b0"></span> High value, tight lots</div>
+       <div class="row"><span class="dot" style="background:${valueColor(50)}"></span> Mid</div>
+       <div class="row"><span class="dot" style="background:${valueColor(8)}"></span> Lower value / spread out</div>
+       <div class="row"><span class="dot" style="background:${valueColor(null)}"></span> No value data</div>`
+    : `<div style="font-weight:700;color:var(--ink);">Door hangers</div>
+       <div class="row"><span class="dot" style="background:#98a2ae"></span> Not hit yet</div>
+       <div class="row"><span class="dot" style="background:#e0a12b"></span> In progress</div>
+       <div class="row"><span class="dot" style="background:#2e9e5b"></span> Done</div>
+       <div class="row"><span class="dot" style="background:#d6483f"></span> Skipped</div>`;
+}
 
 function initMap(){
   map = L.map('map',{zoomControl:true}).setView([45.0105,-93.4555],12);
@@ -173,9 +196,9 @@ function initMap(){
   initLocate();
 }
 function clusterIcon(c){
-  const ch=c.getAllChildMarkers(), n=ch.length; let done=0, act=0;
-  for(const m of ch){ const s=m.options.statusKey; if(s==='completed')done++; else if(s==='in_progress'||s==='skipped')act++; }
-  const color = (n>0&&done===n)?COLOR.completed:(done>0||act>0)?COLOR.in_progress:COLOR.not_started;
+  const ch=c.getAllChildMarkers(), n=ch.length; let done=0, act=0, best=null;
+  for(const m of ch){ const s=m.options.statusKey; if(s==='completed')done++; else if(s==='in_progress'||s==='skipped')act++; const v=m.options.valueScore; if(typeof v==='number'&&(best===null||v>best))best=v; }
+  const color = S.view==='value'?valueColor(best):(n>0&&done===n)?COLOR.completed:(done>0||act>0)?COLOR.in_progress:COLOR.not_started;
   const size = n<10?32:n<30?38:46;
   return L.divIcon({html:`<div style="background:${color};width:${size}px;height:${size}px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35);">${n}</div>`,className:'kc',iconSize:L.point(size,size),iconAnchor:L.point(size/2,size/2)});
 }
@@ -188,7 +211,8 @@ function render(){
     const s = stOf(t.id);
     if(s==='completed'){done++;homesDone+=t.home_count||0;} else if(s==='in_progress')prog++;
     if(t.centroid_lat==null)continue;
-    const m = L.circleMarker([t.centroid_lat,t.centroid_lng],{radius:6+Math.min(t.home_count,15)*0.7,color:'#fff',weight:1.5,fillColor:COLOR[s],fillOpacity:.9,statusKey:s});
+    const vs = t.value_score==null?null:Number(t.value_score), isV=S.view==='value', top=isV&&vs>=75;
+    const m = L.circleMarker([t.centroid_lat,t.centroid_lng],{radius:isV?4+((vs||0)/100)*16:6+Math.min(t.home_count,15)*0.7,color:top?'#fff3b0':'#fff',weight:top?3.5:1.5,fillColor:isV?valueColor(vs):COLOR[s],fillOpacity:isV&&vs==null?.45:.9,statusKey:s,valueScore:vs});
     m.on('click',()=>openPanel(t.id));
     m.bindTooltip(`${t.name} · ${t.home_count} homes`,{direction:'top',offset:[0,-6]});
     cluster.addLayer(m); S.markers[t.id]=m;
@@ -203,7 +227,7 @@ async function openPanel(id){
   S.sel=id; const t=S.terr.find(x=>x.id===id); if(!t)return;
   const s=stOf(id), row=S.status[id];
   document.getElementById('p-name').textContent=t.name;
-  document.getElementById('p-meta').textContent=`${t.home_count} homes · avg built ${t.avg_year_built??'—'}`;
+  document.getElementById('p-meta').textContent=`${t.home_count} homes · avg built ${t.avg_year_built??'—'}${t.avg_emv?' · avg value $'+Math.round(t.avg_emv/1000).toLocaleString()+'k · ~'+Math.round(t.spacing_m)+' m between homes':''}`;
   const b=document.getElementById('p-badge'); b.textContent=LABEL[s]; b.className='badge '+s;
   document.getElementById('p-notes').value=row?.notes||'';
   document.getElementById('p-hist').textContent=row?`${LABEL[s]} · ${new Date(row.updated_at).toLocaleString()}`:'Nothing yet.';
@@ -240,6 +264,11 @@ async function saveNote(){
 }
 
 function wire(){
+  document.getElementById('view-btn').onclick=()=>{
+    S.view = S.view==='value'?'status':'value';
+    document.getElementById('view-btn').textContent = S.view==='value'?'✅ Progress view':'💰 Value view';
+    renderLegend(); render();
+  };
   document.getElementById('close-panel').onclick=()=>document.getElementById('panel').classList.remove('open');
   document.getElementById('act-prog').onclick=()=>setStatus('in_progress');
   document.getElementById('act-done').onclick=()=>setStatus('completed');
