@@ -310,6 +310,7 @@
       <button id="vt-priority">Oldest Homes</button>
     </div>
     <button class="icon-btn" id="team-stats-btn" hidden>📊 Team Stats</button>
+    <a class="icon-btn" id="holiday-btn" href="holiday.html" hidden style="text-decoration:none;">🎄 Holiday Lights</a>
     <button class="icon-btn" id="my-stats-btn">✅ My Stats</button>
     <button class="icon-btn" id="message-team-btn" hidden>✉️ Message Team</button>
     <div class="datepick">
@@ -660,6 +661,7 @@ async function boot(session) {
   state.userId = session.user.id;
   document.getElementById('who-box').innerHTML = `<b>${(profile?.full_name || session.user.email)}</b><br>${profile?.role === 'admin' ? 'Admin' : 'Technician'}`;
   document.getElementById('team-stats-btn').hidden = profile?.role !== 'admin';
+  document.getElementById('holiday-btn').hidden = profile?.role !== 'admin';
   document.getElementById('message-team-btn').hidden = profile?.role !== 'admin';
 
   document.getElementById('work-date').value = state.workDate;
