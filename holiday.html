@@ -210,7 +210,7 @@ function initMap(){
 function clusterIcon(c){
   const ch=c.getAllChildMarkers(), n=ch.length; let done=0, act=0, best=null;
   for(const m of ch){ const s=m.options.statusKey; if(s==='completed')done++; else if(s==='in_progress'||s==='skipped')act++; const v=m.options.valueScore; if(typeof v==='number'&&(best===null||v>best))best=v; }
-  const color = S.view==='value'?valueColor(best):(n>0&&done===n)?COLOR.completed:(done>0||act>0)?COLOR.in_progress:COLOR.not_started;
+  const color = (n>0&&done===n)?COLOR.completed:S.view==='value'?valueColor(best):(n>0&&done===n)?COLOR.completed:(done>0||act>0)?COLOR.in_progress:COLOR.not_started;
   const size = n<10?32:n<30?38:46;
   return L.divIcon({html:`<div style="background:${color};width:${size}px;height:${size}px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35);">${n}</div>`,className:'kc',iconSize:L.point(size,size),iconAnchor:L.point(size/2,size/2)});
 }
@@ -224,9 +224,9 @@ function render(){
     if(s==='completed'){done++;homesDone+=t.home_count||0;} else if(s==='in_progress')prog++;
     if(t.centroid_lat==null)continue;
     const vs = t.value_score==null?null:Number(t.value_score), vp = t.value_pct==null?null:Number(t.value_pct), isV=S.view==='value', top=isV&&vs>=75;
-    const ringC = isV ? (s==='completed'?'#0b6b2e':s==='in_progress'?'#b8780a':(top?'#fff3b0':'#fff')) : '#fff';
+    const w=(s==='completed'||s==='in_progress'); const ringC = isV ? (s==='completed'?'#0b6b2e':s==='in_progress'?'#b8780a':(top?'#fff3b0':'#fff')) : '#fff';
     const ringW = isV ? (s==='completed'?4:s==='in_progress'?3:(top?3.5:1.5)) : 1.5;
-    const m = L.circleMarker([t.centroid_lat,t.centroid_lng],{radius:isV?4+((vs||0)/100)*16:6+Math.min(t.home_count,15)*0.7,color:ringC,weight:ringW,fillColor:isV?valueColor(vp):COLOR[s],fillOpacity:isV&&vp==null?.45:.9,statusKey:s,valueScore:vp});
+    const m = L.circleMarker([t.centroid_lat,t.centroid_lng],{radius:isV?(w?Math.max(10,4+((vs||0)/100)*16):4+((vs||0)/100)*16):6+Math.min(t.home_count,15)*0.7,color:(isV&&w)?'#fff':ringC,weight:(isV&&w)?3:ringW,fillColor:isV?(w?COLOR[s]:valueColor(vp)):COLOR[s],fillOpacity:isV&&vp==null&&!w?.45:.95,statusKey:s,valueScore:vp});
     m.on('click',()=>openPanel(t.id));
     m.bindTooltip(`${t.name} · ${t.home_count} homes`,{direction:'top',offset:[0,-6]});
     cluster.addLayer(m); S.markers[t.id]=m;
