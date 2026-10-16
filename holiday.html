@@ -73,6 +73,10 @@
   #locate-btn svg{width:30px;height:30px;}
   #locate-btn.following{background:#0b3d91!important;}
   #locate-btn::after{content:'My location';position:absolute;right:66px;top:50%;transform:translateY(-50%);background:rgba(20,30,40,.88);color:#fff;font-size:12px;font-weight:700;padding:4px 8px;border-radius:6px;white-space:nowrap;pointer-events:none;}
+
+  .office-marker-wrap{background:transparent!important;border:none!important;}
+  .office-marker{width:48px;height:48px;border-radius:50% 50% 50% 0;background:#7b3fa0;border:3px solid #fff;transform:rotate(-45deg);box-shadow:0 3px 10px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;}
+  .office-marker span{transform:rotate(45deg);font-size:24px;line-height:1;}
 </style>
 </head>
 <body>
@@ -198,6 +202,7 @@ function initMap(){
   map = L.map('map',{zoomControl:true}).setView([45.0105,-93.4555],12);
   L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Imagery &copy; Esri, Maxar'}).addTo(map);
   L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,pane:'overlayPane'}).addTo(map);
+  L.marker([44.9861367,-93.397256],{icon:L.divIcon({className:'office-marker-wrap',html:'<div class="office-marker"><span>🏢</span></div>',iconSize:[48,48],iconAnchor:[24,48]}),zIndexOffset:950,keyboard:false}).addTo(map).bindTooltip('Kahuna Office — 634 Mendelssohn Ave N',{direction:'top',offset:[0,-40]});
   cluster = L.markerClusterGroup({maxClusterRadius:40,disableClusteringAtZoom:17,iconCreateFunction:clusterIcon});
   map.addLayer(cluster);
   initLocate();
