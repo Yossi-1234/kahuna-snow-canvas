@@ -152,7 +152,7 @@ function deny(msg){ gate.innerHTML = msg + '<br><br><a href="index.html">Back to
   if (!session) { deny('Please log in on the main page first.'); return; }
   S.userId = session.user.id;
   const { data: prof } = await sb.from('profiles').select('role').eq('id', S.userId).single();
-  if (!prof || prof.role !== 'admin') { deny('This page is for admins only.'); return; }
+  let ok = !!prof && prof.role === 'admin'; if (!ok) { const { data: acc } = await sb.from('holiday_access').select('user_id').eq('user_id', S.userId).maybeSingle(); ok = !!acc; } if (!ok) { deny('This page is for admins only.'); return; }
   gate.style.display = 'none';
   document.getElementById('app').style.display = 'flex';
   initMap();
