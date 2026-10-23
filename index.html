@@ -668,7 +668,7 @@ async function boot(session) {
   state.userId = session.user.id;
   document.getElementById('who-box').innerHTML = `<b>${(profile?.full_name || session.user.email)}</b><br>${profile?.role === 'admin' ? 'Admin' : 'Technician'}`;
   document.getElementById('team-stats-btn').hidden = profile?.role !== 'admin';
-  document.getElementById('holiday-btn').hidden = profile?.role !== 'admin';
+  document.getElementById('holiday-btn').hidden = profile?.role !== 'admin'; if (profile?.role !== 'admin') { sb.from('holiday_access').select('user_id').eq('user_id', session.user.id).maybeSingle().then(r => { if (r.data) document.getElementById('holiday-btn').hidden = false; }); }
   document.getElementById('message-team-btn').hidden = profile?.role !== 'admin';
 
   document.getElementById('work-date').value = state.workDate;
