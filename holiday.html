@@ -167,7 +167,7 @@ async function fetchAll(make, size=1000){
   return all;
 }
 async function loadData(){
-  const t = await fetchAll(()=>sb.from('territories').select('*').eq('city','Plymouth').or('hidden.eq.false,holiday_only.eq.true').order('street_name').order('block_low').order('id'));
+  const t = await fetchAll(()=>sb.from('territories').select('id,name,street_name,block_low,block_high,city,centroid_lat,centroid_lng,home_count,avg_year_built,avg_emv,spacing_m,value_score,value_pct,hidden,holiday_only').eq('city','Plymouth').or('hidden.eq.false,holiday_only.eq.true').order('street_name').order('block_low').order('id'));
   S.terr = t || [];
   const st = await fetchAll(()=>sb.from('holiday_status').select('*').order('territory_id'));
   S.status = {}; for (const r of (st||[])) S.status[r.territory_id] = r;
