@@ -839,10 +839,37 @@ async function fetchAllRows(makeQuery, pageSize = 1000) {
   return all;
 }
 
+// Territories rarely change, so the phone keeps a copy and only re-downloads when the
+// number of visible territories changes or the copy is a week old. Only visible
+// territories and only the columns the map uses are downloaded (saves Supabase data).
+const TERR_COLS = 'id,name,street_name,block_low,block_high,city,centroid_lat,centroid_lng,home_count,avg_year_built,oldest_year_built,priority_score,priority_rank,avg_emv,avg_lot_acres,spacing_m,value_score,value_pct,hidden';
+const TERR_CACHE_KEY = 'kahuna_territories_v2';
 async function loadTerritories() {
+  let cached = null;
+  try { cached = JSON.parse(localStorage.getItem(TERR_CACHE_KEY) || 'null'); } catch (e) { cached = null; }
+  const { count, error } = await sb.from('territories').select('id', { count: 'exact', head: true }).eq('hidden', false);
+  if (!error && cached && cached.count === count && Date.now() - cached.at < 7 * 864e5 && Array.isArray(cached.rows)) {
+    state.territories = cached.rows;
+    return;
+  }
   const all = await fetchAllRows(() =>
-    sb.from('territories').select('*').order('street_name').order('block_low').order('id'));
-  if (all) state.territories = all.filter(t => !t.hidden);
+    sb.from('territories').select(TERR_COLS).eq('hidden', false).order('street_name').order('block_low').order('id'));
+  if (!all) { if (cached?.rows) state.territories = cached.rows; return; }
+  state.territories = all;
+  try { localStorage.setItem(TERR_CACHE_KEY, JSON.stringify({ at: Date.now(), count: all.length, rows: all })); } catch (e) { /* storage full or blocked: fine */ }
+}
+
+// Apply one changed status row to the map without re-downloading everything.
+// Keeps the "as of the viewed date" rule: the newest row dated on/before that date wins.
+function applyStatusRow(row) {
+  if (!row || !row.territory_id || !row.work_date || row.work_date > state.workDate) return false;
+  const cur = state.statusByTerritory[row.territory_id];
+  if (cur && cur.work_date > row.work_date) return false;
+  const who = state.estimators.find(p => p.id === row.updated_by);
+  state.statusByTerritory[row.territory_id] = {
+    territory_id: row.territory_id, status: row.status, work_date: row.work_date, updated_by: row.updated_by,
+    updated_at: row.updated_at, notes: row.notes, updated_by_name: who?.full_name || cur?.updated_by_name || null };
+  return true;
 }
 
 async function loadStatusForDate(dateStr) {
@@ -1375,9 +1402,9 @@ async function setStatus(newStatus) {
   const payload = {
     territory_id: territoryId, work_date: state.workDate, status: newStatus, updated_by: user.id
   };
-  const { error } = await sb.from('territory_status').upsert(payload, { onConflict: 'territory_id,work_date' });
+  const { data: saved, error } = await sb.from('territory_status').upsert(payload, { onConflict: 'territory_id,work_date' }).select().single();
   if (error) { alert('Could not update status: ' + error.message); return; }
-  await loadStatusForDate(state.workDate);
+  applyStatusRow(saved);
   renderAll();
   openPanel(territoryId);
 }
@@ -1422,9 +1449,9 @@ document.getElementById('save-note').onclick = async () => {
     notes: document.getElementById('p-notes').value,
     updated_by: user.id
   };
-  const { error } = await sb.from('territory_status').upsert(payload, { onConflict: 'territory_id,work_date' });
+  const { data: saved, error } = await sb.from('territory_status').upsert(payload, { onConflict: 'territory_id,work_date' }).select().single();
   if (error) { alert('Could not save note: ' + error.message); return; }
-  await loadStatusForDate(state.workDate);
+  applyStatusRow(saved);
   renderAll();
   openPanel(territoryId);
 };
@@ -1461,11 +1488,12 @@ async function runSearch(q) {
 function subscribeRealtime() {
   state.channel = sb.channel('territory_status_live')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'territory_status' }, async (payload) => {
-      const row = payload.new?.work_date ? payload.new : payload.old;
-      // A change dated on/before the viewed date can affect the as-of view; only
-      // skip changes dated after it.
-      if (!row?.work_date || row.work_date > state.workDate) return;
-      await loadStatusForDate(state.workDate);
+      if (payload.eventType === 'DELETE') {
+        // a cancelled status: deletes only tell us the row id, so reload (rare)
+        await loadStatusForDate(state.workDate);
+      } else if (!applyStatusRow(payload.new)) {
+        return;   // dated after the viewed day, or older than what's shown
+      }
       renderAll();
       if (state.selectedTerritoryId) openPanel(state.selectedTerritoryId);
     })
